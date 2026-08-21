@@ -12,24 +12,176 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClearChat = document.getElementById('btn-clear-chat');
     const shortcutBtns = document.querySelectorAll('.shortcut-btn');
 
+    // Mobile Navigation Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarClose = document.getElementById('sidebar-close');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    // Modal Elements
+    const paramModal = document.getElementById('param-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const modalClose = document.getElementById('modal-close');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalSubmit = document.getElementById('modal-submit');
+
     // App State
     let currentSessionId = null;
     let appName = 'multi_tool_agent';
+    let currentModalAction = null;
+
+    // Mobile Sidebar Drawer Handlers
+    function openSidebar() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+        }
+    }
+
+    function closeSidebar() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        }
+    }
+
+    if (sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
+    if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+    if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+    // Bind Welcome Suggestion Cards to fill chat textarea
+    function bindSuggestionCards() {
+        const suggestionCards = document.querySelectorAll('.suggestion-card');
+        suggestionCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const fillText = card.getAttribute('data-fill');
+                if (fillText) {
+                    userInput.value = fillText;
+                    userInput.style.height = 'auto';
+                    userInput.style.height = `${Math.min(userInput.scrollHeight, 100)}px`;
+                    btnSend.disabled = false;
+                    userInput.focus();
+                }
+            });
+        });
+    }
+
+    bindSuggestionCards();
+
+    // Modal Dialog Handlers
+    function openModal(actionType) {
+        currentModalAction = actionType;
+        modalBody.innerHTML = '';
+
+        if (actionType === 'm_money') {
+            modalTitle.innerHTML = '<i class="fa-solid fa-money-bill-wave"></i> Add M-Money / B-Money';
+            modalBody.innerHTML = `
+                <div class="input-group">
+                    <label for="param-email">Target Email Address <span class="required-star">*</span></label>
+                    <input type="email" id="param-email" placeholder="e.g. testmmoney131@gmail.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="param-amount">Gift Card Amount ($)</label>
+                    <input type="number" id="param-amount" value="30" placeholder="30">
+                </div>
+                <div class="input-group">
+                    <label>Target Environment (mcom / bcom + Env #)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="param-env-prefix" style="width: 110px;">
+                            <option value="mcom-" selected>mcom-</option>
+                            <option value="bcom-">bcom-</option>
+                        </select>
+                        <input type="number" id="param-env-num" value="131" placeholder="e.g. 131, 170" style="flex: 1;">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="param-cards">Number of Cards</label>
+                    <input type="number" id="param-cards" value="4" placeholder="4">
+                </div>
+            `;
+        } else if (actionType === 'star_money') {
+            modalTitle.innerHTML = '<i class="fa-solid fa-star"></i> Star Money Setup';
+            modalBody.innerHTML = `
+                <div class="input-group">
+                    <label for="param-card">Loyalty Card Number <span class="required-star">*</span></label>
+                    <input type="text" id="param-card" placeholder="e.g. 6035340001257605" required>
+                </div>
+                <div class="input-group">
+                    <label for="param-reward">Reward Money Amount ($)</label>
+                    <input type="number" id="param-reward" value="10" placeholder="10">
+                </div>
+            `;
+        }
+
+        paramModal.classList.add('active');
+        const firstInput = modalBody.querySelector('input');
+        if (firstInput) setTimeout(() => firstInput.focus(), 100);
+    }
+
+    function closeModal() {
+        paramModal.classList.remove('active');
+        currentModalAction = null;
+    }
+
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalCancel) modalCancel.addEventListener('click', closeModal);
+
+    if (modalSubmit) {
+        modalSubmit.addEventListener('click', () => {
+            if (currentModalAction === 'm_money') {
+                const emailInput = document.getElementById('param-email');
+                const amountInput = document.getElementById('param-amount');
+                const envPrefixSelect = document.getElementById('param-env-prefix');
+                const envNumInput = document.getElementById('param-env-num');
+                const cardsInput = document.getElementById('param-cards');
+
+                const email = emailInput ? emailInput.value.trim() : '';
+                if (!email) {
+                    alert('Please enter a target email address.');
+                    if (emailInput) emailInput.focus();
+                    return;
+                }
+
+                const amount = amountInput ? amountInput.value.trim() || '30' : '30';
+                const prefix = envPrefixSelect ? envPrefixSelect.value : 'mcom-';
+                const num = envNumInput ? envNumInput.value.trim() || '131' : '131';
+                const env = `${prefix}${num}`;
+                const cards = cardsInput ? cardsInput.value.trim() || '4' : '4';
+
+                closeModal();
+                sendMessage(`I want to add M-Money in this account ${email} with amount ${amount}, environment ${env}, no of cards ${cards}`);
+
+            } else if (currentModalAction === 'star_money') {
+                const cardInput = document.getElementById('param-card');
+                const rewardInput = document.getElementById('param-reward');
+
+                const cardNumber = cardInput ? cardInput.value.trim() : '';
+                if (!cardNumber) {
+                    alert('Please enter a target loyalty card number.');
+                    if (cardInput) cardInput.focus();
+                    return;
+                }
+
+                const reward = rewardInput ? rewardInput.value.trim() || '10' : '10';
+
+                closeModal();
+                sendMessage(`Add Star Money reward dollars ${reward} to card ${cardNumber}`);
+            }
+        });
+    }
 
     // Helper: Determine Base Server URL Dynamically
     function resolveInitialServerUrl() {
-        // 1. Check if user saved a custom deployed URL in localStorage
         const savedUrl = localStorage.getItem('adk_server_url');
         if (savedUrl && savedUrl.trim()) {
             return savedUrl.trim();
         }
 
-        // 2. If running on a deployed HTTP/HTTPS host (Cloud Run, Render, Vercel, EC2, etc.)
         if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
             return window.location.origin;
         }
 
-        // 3. Fallback for opening static file:// locally
         return 'http://localhost:8000';
     }
 
@@ -56,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-resize Textarea
     userInput.addEventListener('input', () => {
         userInput.style.height = 'auto';
-        userInput.style.height = `${Math.min(userInput.scrollHeight, 120)}px`;
+        userInput.style.height = `${Math.min(userInput.scrollHeight, 100)}px`;
         btnSend.disabled = !userInput.value.trim();
     });
 
@@ -120,25 +272,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const baseUrl = serverUrlInput.value.trim().replace(/\/$/, '') || window.location.origin;
         const userId = userIdInput.value.trim() || 'qa_user_1';
 
-        // Clear input box
         if (!promptText) {
             userInput.value = '';
             userInput.style.height = 'auto';
             btnSend.disabled = true;
         }
 
-        // Hide welcome message if present
+        closeSidebar();
+
         const welcomeMsg = document.querySelector('.welcome-message');
         if (welcomeMsg) welcomeMsg.remove();
 
-        // Render User Message
         appendMessage('user', text);
-
-        // Render Typing Indicator
         const typingEl = appendTypingIndicator();
 
         try {
-            // Payload for ADK /run endpoint
             const payload = {
                 appName: appName,
                 userId: userId,
@@ -166,7 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const events = await response.json();
             console.log('ADK Run Events:', events);
 
-            // Process ADK Event Array
             let hasTextResponse = false;
 
             if (Array.isArray(events)) {
@@ -295,7 +442,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSend.addEventListener('click', () => sendMessage());
     btnNewSession.addEventListener('click', () => createSession());
 
-    // Auto switch user when user ID field is edited
     userIdInput.addEventListener('change', () => createSession());
     userIdInput.addEventListener('blur', () => {
         if (userIdInput.value.trim() && !currentSessionId) {
@@ -306,20 +452,61 @@ document.addEventListener('DOMContentLoaded', () => {
     btnClearChat.addEventListener('click', () => {
         messagesContainer.innerHTML = `
             <div class="welcome-message">
-                <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
+                <div class="welcome-icon">
+                    <img src="logo.png" alt="TestSense AI Logo" class="welcome-logo-img">
+                </div>
                 <h2>TestSense AI Ready</h2>
                 <p>Chat cleared. Ask any QA test data or API execution question.</p>
+                <div class="welcome-suggestions">
+                    <div class="suggestion-card" data-fill="I want to add M-Money in this account sanket123@gmail.com">
+                        <div class="suggestion-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div class="suggestion-text">
+                            <strong>Add M-Money / B-Money</strong>
+                            <span>Fund target account with gift card balance</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                    </div>
+                    <div class="suggestion-card" data-fill="Add Star Money reward dollars 10 to card 6035340001257605">
+                        <div class="suggestion-icon"><i class="fa-solid fa-star"></i></div>
+                        <div class="suggestion-text">
+                            <strong>Setup Star Money Rewards</strong>
+                            <span>Load reward dollars onto Macy's card</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                    </div>
+                    <div class="suggestion-card" data-fill="Fetch verified Sandbox Credit Cards test data">
+                        <div class="suggestion-icon"><i class="fa-solid fa-credit-card"></i></div>
+                        <div class="suggestion-text">
+                            <strong>Fetch Sandbox Cards</strong>
+                            <span>Retrieve Visa, Mastercard, Prop Gold & Amex</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                    </div>
+                    <div class="suggestion-card" data-fill="Fetch Web IDs for BOPS product category">
+                        <div class="suggestion-icon"><i class="fa-solid fa-box-archive"></i></div>
+                        <div class="suggestion-text">
+                            <strong>Fetch Web IDs for PDP</strong>
+                            <span>Get Web IDs for BOPS, LTL, GWP, and Ship</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                    </div>
+                </div>
             </div>
         `;
+        bindSuggestionCards();
     });
 
     shortcutBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            const prompt = btn.getAttribute('data-prompt');
-            sendMessage(prompt);
+            const action = btn.getAttribute('data-action');
+            if (action) {
+                openModal(action);
+            } else {
+                const prompt = btn.getAttribute('data-prompt');
+                if (prompt) sendMessage(prompt);
+            }
         });
     });
 
-    // Auto-create Session on Load
     createSession();
 });

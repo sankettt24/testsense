@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TestSense AI - QA Test Data Agent (Google ADK)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TestSense AI - Self-Learning QA Test Data AI Agent</title>
     <!-- Google Fonts & Font Awesome Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,20 +13,44 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar / Settings Panel -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="logo-icon">
-                    <i class="fa-solid fa-brain-circuit"></i>
+        <!-- Sidebar Backdrop Overlay for Mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Interactive Tool Parameter Modal -->
+        <div id="param-modal" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 id="modal-title"><i class="fa-solid fa-sliders"></i> Tool Parameters</h3>
+                    <button id="modal-close" class="icon-button" title="Close"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="brand-text">
-                    <h2>TestSense AI</h2>
-                    <span class="badge">Google ADK</span>
+                <div class="modal-body" id="modal-body">
+                    <!-- Dynamic form fields inserted via JS -->
                 </div>
+                <div class="modal-footer">
+                    <button id="modal-cancel" class="btn secondary">Cancel</button>
+                    <button id="modal-submit" class="btn primary"><i class="fa-solid fa-paper-plane"></i> Execute Tool</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Settings Drawer -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="logo-icon">
+                        <img src="logo.png" alt="TestSense AI Logo" class="brand-logo-img">
+                    </div>
+                    <div class="brand-text">
+                        <h2>TestSense AI</h2>
+                    </div>
+                </div>
+                <button id="sidebar-close" class="icon-button mobile-only" title="Close Menu">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
             <div class="sidebar-section">
-                <h3><i class="fa-solid fa-server"></i> ADK Server Config</h3>
+                <h3><i class="fa-solid fa-server"></i> Server Config</h3>
                 <div class="input-group">
                     <label for="server-url">Server / Deployed API URL</label>
                     <input type="text" id="server-url" value="" placeholder="Auto-detecting deployed URL...">
@@ -53,13 +77,22 @@
             </div>
 
             <div class="sidebar-section capabilities">
-                <h3><i class="fa-solid fa-bolt"></i> Integrated Tools</h3>
+                <h3><i class="fa-solid fa-bolt"></i> Integrated Capabilities</h3>
                 <ul>
-                    <li><i class="fa-solid fa-credit-card"></i> <code>add_m_money</code></li>
-                    <li><i class="fa-solid fa-star"></i> <code>setup_star_money</code></li>
-                    <li><i class="fa-solid fa-tags"></i> <code>get_supc_details</code></li>
-                    <li><i class="fa-solid fa-tag"></i> <code>get_pzo_details</code></li>
-                    <li><i class="fa-solid fa-database"></i> <code>fetch_qa_test_data</code></li>
+                    <li><i class="fa-solid fa-money-bill-wave"></i> <span>M-Money & B-Money Setup</span></li>
+                    <li><i class="fa-solid fa-star"></i> <span>Star Money Rewards Setup</span></li>
+                    <li><i class="fa-solid fa-tag"></i> <span>SUPC Offer Intelligence</span></li>
+                    <li><i class="fa-solid fa-percent"></i> <span>PZO Offer Intelligence</span></li>
+                    <li><i class="fa-solid fa-database"></i> <span>QA Knowledge Base Lookup</span></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section upcoming-features">
+                <h3><i class="fa-solid fa-rocket"></i> Upcoming Capabilities</h3>
+                <ul>
+                    <li><i class="fa-solid fa-cart-shopping"></i> <span>Mock Order API Payload Generator</span></li>
+                    <li><i class="fa-solid fa-vial-circle-check"></i> <span>LambdaTest Test Pipeline Execution</span></li>
+                    <li><i class="fa-solid fa-file-arrow-up"></i> <span>Feature Specs & Asset Ingestion</span></li>
                 </ul>
             </div>
         </aside>
@@ -67,9 +100,14 @@
         <!-- Main Chat Panel -->
         <main class="chat-panel">
             <header class="chat-header">
-                <div class="header-title">
-                    <h1>Self-Learning QA AI Agent</h1>
-                    <p>Execute Postman endpoints, fetch Web IDs, & retrieve verified sandbox cards in real time.</p>
+                <div class="header-left">
+                    <button id="sidebar-toggle" class="icon-button mobile-only" title="Open Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="header-title">
+                        <h1>TestSense AI Agent</h1>
+                        <p>QA Test Data & API Automation</p>
+                    </div>
                 </div>
                 <div class="header-actions">
                     <button id="btn-clear-chat" class="icon-button" title="Clear Chat Window">
@@ -80,13 +118,13 @@
 
             <!-- Quick Action Shortcut Pills -->
             <div class="shortcuts-container">
-                <span class="shortcut-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Try Asking:</span>
+                <span class="shortcut-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Shortcuts:</span>
                 <div class="shortcuts-scroll">
-                    <button class="shortcut-btn" data-prompt="I want to add M-Money in this account sanket123@gmail.com">
+                    <button class="shortcut-btn" data-action="m_money">
                         <i class="fa-solid fa-money-bill-wave"></i> Add M-Money
                     </button>
-                    <button class="shortcut-btn" data-prompt="Add Star Money reward dollars to card 6035340001257605">
-                        <i class="fa-solid fa-star"></i> Star Money Setup
+                    <button class="shortcut-btn" data-action="star_money">
+                        <i class="fa-solid fa-star"></i> Star Money
                     </button>
                     <button class="shortcut-btn" data-prompt="Fetch verified Sandbox Credit Cards test data">
                         <i class="fa-solid fa-credit-card"></i> Sandbox Cards
@@ -95,7 +133,10 @@
                         <i class="fa-solid fa-box-archive"></i> BOPS Web IDs
                     </button>
                     <button class="shortcut-btn" data-prompt="Generate the SUPC code details">
-                        <i class="fa-solid fa-tag"></i> SUPC Offer Details
+                        <i class="fa-solid fa-tag"></i> SUPC Offer
+                    </button>
+                    <button class="shortcut-btn" data-prompt="Get PZO promotion details">
+                        <i class="fa-solid fa-percent"></i> PZO Offer Details
                     </button>
                 </div>
             </div>
@@ -103,22 +144,62 @@
             <!-- Messages Stream Area -->
             <div class="messages-container" id="messages-container">
                 <div class="welcome-message">
-                    <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="welcome-icon">
+                        <img src="logo.png" alt="TestSense AI Logo" class="welcome-logo-img">
+                    </div>
                     <h2>Welcome to TestSense AI</h2>
-                    <p>Your Google ADK Agent is ready. Select a quick action above or type a natural language request to begin.</p>
+                    <p>Your Agent is ready. Tap any suggestion prompt below to fill the chat box:</p>
+
+                    <div class="welcome-suggestions">
+                        <div class="suggestion-card" data-fill="I want to add M-Money in this account sanket123@gmail.com">
+                            <div class="suggestion-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                            <div class="suggestion-text">
+                                <strong>Add M-Money / B-Money</strong>
+                                <span>Fund target account with gift card balance</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                        </div>
+
+                        <div class="suggestion-card" data-fill="Add Star Money reward dollars 10 to card 6035340001257605">
+                            <div class="suggestion-icon"><i class="fa-solid fa-star"></i></div>
+                            <div class="suggestion-text">
+                                <strong>Setup Star Money Rewards</strong>
+                                <span>Load reward dollars onto Macy's card</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                        </div>
+
+                        <div class="suggestion-card" data-fill="Fetch verified Sandbox Credit Cards test data">
+                            <div class="suggestion-icon"><i class="fa-solid fa-credit-card"></i></div>
+                            <div class="suggestion-text">
+                                <strong>Fetch Sandbox Cards</strong>
+                                <span>Retrieve Visa, Mastercard, Prop Gold & Amex</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                        </div>
+
+                        <div class="suggestion-card" data-fill="Fetch Web IDs for BOPS product category">
+                            <div class="suggestion-icon"><i class="fa-solid fa-box-archive"></i></div>
+                            <div class="suggestion-text">
+                                <strong>Fetch Web IDs for PDP</strong>
+                                <span>Get Web IDs for BOPS, LTL, GWP, and Ship</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Input Box Container -->
             <div class="input-container">
                 <div class="input-wrapper">
-                    <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'Add M-Money for test account sanket123@gmail.com')..." rows="1"></textarea>
+                    <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'Add M-Money for sanket123@gmail.com')..." rows="1"></textarea>
                     <button id="btn-send" class="btn primary" disabled>
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>
                 <div class="input-footer">
-                    <span>Press <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for line break</span>
+                    <span class="footer-hint">Press <strong>Enter</strong> to send</span>
                     <span class="security-badge"><i class="fa-solid fa-shield-halved"></i> Guardrails Active</span>
                 </div>
             </div>
