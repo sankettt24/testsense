@@ -16,6 +16,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSessionId = null;
     let appName = 'multi_tool_agent';
 
+    // Helper: Determine Base Server URL Dynamically
+    function resolveInitialServerUrl() {
+        // 1. Check if user saved a custom deployed URL in localStorage
+        const savedUrl = localStorage.getItem('adk_server_url');
+        if (savedUrl && savedUrl.trim()) {
+            return savedUrl.trim();
+        }
+
+        // 2. If running on a deployed HTTP/HTTPS host (Cloud Run, Render, Vercel, EC2, etc.)
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+            return window.location.origin;
+        }
+
+        // 3. Fallback for opening static file:// locally
+        return 'http://localhost:8000';
+    }
+
+    // Initialize Server URL Input Box
+    const initialUrl = resolveInitialServerUrl();
+    serverUrlInput.value = initialUrl;
+
+    // Save custom deployed URL when changed by user
+    serverUrlInput.addEventListener('change', () => {
+        const val = serverUrlInput.value.trim().replace(/\/$/, '');
+        if (val) {
+            localStorage.setItem('adk_server_url', val);
+            console.log('Saved custom server URL:', val);
+            createSession();
+        }
+    });
+
     // Helper: Update Status Indicator
     function setStatus(state, text) {
         statusIndicator.querySelector('.dot').className = `dot ${state}`;
@@ -46,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Initialize or Create ADK Session for current User ID
     async function createSession() {
-        const baseUrl = serverUrlInput.value.replace(/\/$/, '');
+        const baseUrl = serverUrlInput.value.trim().replace(/\/$/, '') || window.location.origin;
         const userId = userIdInput.value.trim() || 'qa_user_1';
 
         setStatus('connecting', 'Connecting...');
@@ -74,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionIdDisplay.textContent = currentSessionId;
         setStatus('connected', `Active User: ${userId}`);
         btnSend.disabled = !userInput.value.trim();
-        console.log(`Switched to User '${userId}' with Session ID:`, currentSessionId);
+        console.log(`Switched to User '${userId}' at '${baseUrl}' with Session ID:`, currentSessionId);
     }
 
     // 2. Send Message to Google ADK /run Endpoint
@@ -86,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await createSession();
         }
 
-        const baseUrl = serverUrlInput.value.replace(/\/$/, '');
+        const baseUrl = serverUrlInput.value.trim().replace(/\/$/, '') || window.location.origin;
         const userId = userIdInput.value.trim() || 'qa_user_1';
 
         // Clear input box
@@ -164,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             if (typingEl) typingEl.remove();
             console.error('Run Error:', error);
-            appendMessage('agent', `❌ Connection error: Could not reach server at ${baseUrl}. Ensure your server (python3 server.py) is running.`);
+            appendMessage('agent', `❌ Connection error: Could not reach server at ${baseUrl}. Ensure your server is running.`);
         }
     }
 
