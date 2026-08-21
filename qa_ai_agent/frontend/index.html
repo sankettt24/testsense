@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TestSense AI - QA Test Data Agent (Google ADK)</title>
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Settings Panel -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-brain-circuit"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>TestSense AI</h2>
+                    <span class="badge">Google ADK</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3><i class="fa-solid fa-server"></i> ADK Server Config</h3>
+                <div class="input-group">
+                    <label for="server-url">Server Base URL</label>
+                    <input type="text" id="server-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+                </div>
+                <div class="input-group">
+                    <label for="user-id">User Identifier</label>
+                    <input type="text" id="user-id" value="qa_tester_1" placeholder="qa_user">
+                </div>
+                <button id="btn-new-session" class="btn secondary">
+                    <i class="fa-solid fa-rotate-right"></i> Start New Session
+                </button>
+            </div>
+
+            <div class="sidebar-section session-info">
+                <h3><i class="fa-solid fa-key"></i> Active Session</h3>
+                <div class="session-card">
+                    <span class="session-label">Session ID:</span>
+                    <code id="session-id-display">Not Connected</code>
+                </div>
+                <div class="status-indicator" id="status-indicator">
+                    <span class="dot disconnected"></span>
+                    <span id="status-text">Disconnected</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section capabilities">
+                <h3><i class="fa-solid fa-bolt"></i> Integrated Tools</h3>
+                <ul>
+                    <li><i class="fa-solid fa-credit-card"></i> <code>add_m_money</code></li>
+                    <li><i class="fa-solid fa-star"></i> <code>setup_star_money</code></li>
+                    <li><i class="fa-solid fa-tags"></i> <code>get_supc_details</code></li>
+                    <li><i class="fa-solid fa-tag"></i> <code>get_pzo_details</code></li>
+                    <li><i class="fa-solid fa-database"></i> <code>fetch_qa_test_data</code></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Chat Panel -->
+        <main class="chat-panel">
+            <header class="chat-header">
+                <div class="header-title">
+                    <h1>Self-Learning QA AI Agent</h1>
+                    <p>Execute Postman endpoints, fetch Web IDs, & retrieve verified sandbox cards in real time.</p>
+                </div>
+                <div class="header-actions">
+                    <button id="btn-clear-chat" class="icon-button" title="Clear Chat Window">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Quick Action Shortcut Pills -->
+            <div class="shortcuts-container">
+                <span class="shortcut-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Try Asking:</span>
+                <div class="shortcuts-scroll">
+                    <button class="shortcut-btn" data-prompt="I want to add M-Money in this account sanket123@gmail.com">
+                        <i class="fa-solid fa-money-bill-wave"></i> Add M-Money
+                    </button>
+                    <button class="shortcut-btn" data-prompt="Add Star Money reward dollars to card 6035340001257605">
+                        <i class="fa-solid fa-star"></i> Star Money Setup
+                    </button>
+                    <button class="shortcut-btn" data-prompt="Fetch verified Sandbox Credit Cards test data">
+                        <i class="fa-solid fa-credit-card"></i> Sandbox Cards
+                    </button>
+                    <button class="shortcut-btn" data-prompt="Fetch Web IDs for BOPS product category">
+                        <i class="fa-solid fa-box-archive"></i> BOPS Web IDs
+                    </button>
+                    <button class="shortcut-btn" data-prompt="Generate the SUPC code details">
+                        <i class="fa-solid fa-tag"></i> SUPC Offer Details
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Stream Area -->
+            <div class="messages-container" id="messages-container">
+                <div class="welcome-message">
+                    <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
+                    <h2>Welcome to TestSense AI</h2>
+                    <p>Your Google ADK Agent is ready. Select a quick action above or type a natural language request to begin.</p>
+                </div>
+            </div>
+
+            <!-- Input Box Container -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'Add M-Money for test account sanket123@gmail.com')..." rows="1"></textarea>
+                    <button id="btn-send" class="btn primary" disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span>Press <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for line break</span>
+                    <span class="security-badge"><i class="fa-solid fa-shield-halved"></i> Guardrails Active</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

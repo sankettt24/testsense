@@ -1,0 +1,215 @@
+{
+  "info": {
+    "_postman_id": "9055b09e-9c21-45d7-9ec0-dce6118530dc",
+    "name": "Loyalty",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41787309"
+  },
+  "item": [
+    {
+      "name": "M/BMoney",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-macys-apikey",
+            "value": "xNfHyhyiQNXIr8CeLCwgXWS1CYTzlCZf4qxiVA1MitVW0jGO",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"environment\": \"mcom-131\",\r\n    \"giftCards\": [\r\n        {\r\n            \"amount\" : \"30\",\r\n            \"noOfCards\": \"4\",\r\n            \"userProfile\": {\r\n                \"email\": \"testmmoney131@gmail.com\"\r\n            }\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ent-apim-qa.cloudrts.net/loyaltyautomation/mbmoneycard/add",
+          "protocol": "https",
+          "host": [
+            "ent-apim-qa",
+            "cloudrts",
+            "net"
+          ],
+          "path": [
+            "loyaltyautomation",
+            "mbmoneycard",
+            "add"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "EmptyCard",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"environment\": \"mcom-130\",\r\n    \"requiredCards\": \"1\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": ""
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Offer-Add",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-macys-apikey",
+            "value": "xNfHyhyiQNXIr8CeLCwgXWS1CYTzlCZf4qxiVA1MitVW0jGO",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"environment\": \"mcom-130\",\r\n    \"loyaltyOffers\": [\r\n        {\r\n            \"emailId\": \"payload@dec.com\",\r\n            \"offerType\": \"SUPC\"\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ent-apim-qa.cloudrts.net/loyaltyautomation/offer/addOffers",
+          "protocol": "https",
+          "host": [
+            "ent-apim-qa",
+            "cloudrts",
+            "net"
+          ],
+          "path": [
+            "loyaltyautomation",
+            "offer",
+            "addOffers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Campaign",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-macys-apikey",
+            "value": "xNfHyhyiQNXIr8CeLCwgXWS1CYTzlCZf4qxiVA1MitVW0jGO",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\r\n    {\r\n        \"environment\": \"MCOM-130\",\r\n        \"campaignType\": \"MMONEY\",\r\n        \"redeemStartDate\": \"2025-12-22\",\r\n        \"redeemEndDate\": \"2026-01-31\"\r\n    }\r\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ent-apim-qa.cloudrts.net/loyaltyautomation/campaign/setup",
+          "protocol": "https",
+          "host": [
+            "ent-apim-qa",
+            "cloudrts",
+            "net"
+          ],
+          "path": [
+            "loyaltyautomation",
+            "campaign",
+            "setup"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Account_StarMoney",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-macys-apikey",
+            "value": "xNfHyhyiQNXIr8CeLCwgXWS1CYTzlCZf4qxiVA1MitVW0jGO",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"channel\": \"MCOM\", //Mandatory\r\n    \"loyalties\": [\r\n        {\r\n            \"cardNumber\": \"6035342400000966\", //Mandatory\r\n            \"targetTier\": \"Platinum\" //Mandatory\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ent-apim-qa.cloudrts.net/loyaltyautomation/loyalty/setup",
+          "protocol": "https",
+          "host": [
+            "ent-apim-qa",
+            "cloudrts",
+            "net"
+          ],
+          "path": [
+            "loyaltyautomation",
+            "loyalty",
+            "setup"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Card_StarMoney",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-macys-apikey",
+            "value": "xNfHyhyiQNXIr8CeLCwgXWS1CYTzlCZf4qxiVA1MitVW0jGO",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"channel\": \"MCOM\", //Mandatory\r\n    \"loyalties\": [\r\n        {\r\n            \"cardNumber\": \"6035340001257605\", //Mandatory\r\n            \"rewardMoney\": \"10\" //Mandatory\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ent-apim-qa.cloudrts.net/loyaltyautomation/loyalty/setup",
+          "protocol": "https",
+          "host": [
+            "ent-apim-qa",
+            "cloudrts",
+            "net"
+          ],
+          "path": [
+            "loyaltyautomation",
+            "loyalty",
+            "setup"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

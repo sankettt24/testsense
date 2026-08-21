@@ -1,0 +1,7 @@
+google-adk
+requests
+aiohttp
+urllib3
+fastapi
+uvicorn
+pydantic
