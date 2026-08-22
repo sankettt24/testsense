@@ -167,14 +167,17 @@ def setup_star_money(card_number: str = "6035340001257605", reward_money: str = 
 
 
 def get_supc_details(environment: str = "mcom-170") -> dict:
-    """Fetches promotion details using GET operation for SUPC code using targeted env eg mcom-170, bcom-170, mcom-130, bcom-130"""
+    """Fetches promotion details using GET operation for SUPC code using targeted env eg mcom-170, mcom-130"""
     if _check_prompt_injection(str(environment)):
         return {"status": "security_block", "message": "Execution Blocked: Potential prompt injection or security risk detected."}
 
     try:
         env_str = environment.lower().strip()
-        if not (env_str.startswith("mcom-") or env_str.startswith("bcom-")):
-            env_str = f"mcom-{env_str}"
+        if "mcore-" not in env_str:
+            if "mcom-" in env_str:
+                env_str = env_str.replace("mcom-", "mcore-")
+            else:
+                env_str = f"mcom-{env_str}"
 
         url = f"http://promotion-service.{env_str}.tbe.zeus.fds.com/api/order/v1/promotions/supc/416870"
         
@@ -195,14 +198,17 @@ def get_supc_details(environment: str = "mcom-170") -> dict:
 
 
 def get_pzo_details(environment: str = "mcom-170") -> dict:
-    """Fetches promotion details using GET operation for PZO code using targeted env eg mcom-170, bcom-170, mcom-130, bcom-130"""
+    """Fetches promotion details using GET operation for PZO code using targeted env eg mcom-170, mcom-130"""
     if _check_prompt_injection(str(environment)):
         return {"status": "security_block", "message": "Execution Blocked: Potential prompt injection or security risk detected."}
 
     try:
         env_str = environment.lower().strip()
-        if not (env_str.startswith("mcom-") or env_str.startswith("bcom-")):
-            env_str = f"mcom-{env_str}"
+        if "mcore-" not in env_str:
+            if "mcom-" in env_str:
+                env_str = env_str.replace("mcom-", "mcore-")
+            else:
+                env_str = f"mcom-{env_str}"
 
         url = f"https://promotion-service.{env_str}.tbe.zeus.fds.com/api/order/v1/promotions/supc/19932757"
         
