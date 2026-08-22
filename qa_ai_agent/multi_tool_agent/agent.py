@@ -198,7 +198,7 @@ def get_supc_details(environment: str = "mcom-170") -> dict:
 
 
 def get_pzo_details(environment: str = "mcom-170") -> dict:
-    """Fetches promotion details using GET operation for PZO code using targeted env eg mcom-170, mcom-130"""
+    """Fetches promotion details using GET operation for PZO code using targeted env eg mcom-170, mcom-130 only for mcom environments"""
     if _check_prompt_injection(str(environment)):
         return {"status": "security_block", "message": "Execution Blocked: Potential prompt injection or security risk detected."}
 
@@ -383,7 +383,7 @@ root_agent = Agent(
         "3. `get_supc_details` (SUPC Promotion GET Endpoint):\n"
         "   - `environment` (Optional): Target environment (default: 'mcom-170', e.g. mcom-130, bcom-170).\n\n"
         "4. `get_pzo_details` (PZO Promotion GET Endpoint):\n"
-        "   - `environment` (Optional): Target environment (default: 'mcom-170', e.g. mcom-130, bcom-170).\n\n"
+        "   - `environment` (Optional): Target environment (default: 'mcom-170', e.g. mcom-130). only for mcom\n\n"
         "5. `fetch_qa_test_data` (QA Knowledge Base Lookup):\n"
         "   - `category` (REQUIRED): Category of test data requested (e.g., BOPS, SHIP, BOSS, GWP, VGC, EGC, 2 TIER, PWP, 3P, COLOR & SIZE PDP, CHANEL PDP, BT, LTL, WNM, CREDIT CARDS, MACYS CARDS, PAYPAL, GIFT CARDS, ADDRESS).\n"
         "   *Rule: If the requested category is missing or ambiguous, ask the user to clarify the category before calling fetch_qa_test_data.*\n\n"
