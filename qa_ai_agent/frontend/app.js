@@ -1678,7 +1678,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 strategyCardText.classList.remove('active');
                 const radioLlm = strategyCardLlm.querySelector('input[type="radio"]');
                 if (radioLlm) radioLlm.checked = true;
-                if (strategyLlmControls) strategyLlmControls.style.display = 'flex';
+                // Restore CSS-defined layout (removes any inline display override)
+                if (strategyLlmControls) strategyLlmControls.style.removeProperty('display');
                 if (strategyTextControls) strategyTextControls.style.display = 'none';
                 if (llmRechunkBar) llmRechunkBar.style.display = 'flex';
             } else {
@@ -1687,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const radioText = strategyCardText.querySelector('input[type="radio"]');
                 if (radioText) radioText.checked = true;
                 if (strategyLlmControls) strategyLlmControls.style.display = 'none';
-                if (strategyTextControls) strategyTextControls.style.display = 'grid';
+                if (strategyTextControls) strategyTextControls.style.removeProperty('display');
                 if (llmRechunkBar) llmRechunkBar.style.display = 'none';
             }
         }
