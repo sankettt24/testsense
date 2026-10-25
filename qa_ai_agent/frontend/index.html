@@ -638,12 +638,58 @@
                                 </div>
                             </div>
 
-                            <!-- LLM-Based Instructions -->
+                            <!-- LLM-Based Instructions & Semantic Rules -->
                             <div class="form-row form-row-full" id="strategy-llm-controls">
-                                <div class="input-group">
-                                    <label for="llm-chunk-instructions">Optional Custom Instructions for Gemini Semantic Splitting</label>
+                                <div class="semantic-rules-panel">
+                                    <div class="semantic-rules-header">
+                                        <i class="fa-solid fa-brain"></i>
+                                        <span><strong>Smart Semantic Chunking Rules Enforced:</strong></span>
+                                        <span class="rules-status-tag"><i class="fa-solid fa-shield-check"></i> Zero Blind Splits</span>
+                                    </div>
+                                    <div class="semantic-rules-grid">
+                                        <div class="rule-item">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <div class="rule-item-content">
+                                                <strong>Proper Concept Boundaries</strong>
+                                                <span>Splits by complete conceptual units and workflows, never by arbitrary lines or word counts.</span>
+                                            </div>
+                                        </div>
+                                        <div class="rule-item">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <div class="rule-item-content">
+                                                <strong>Hierarchical Breadcrumbs</strong>
+                                                <span>Prepends <code># Document &gt; ## Section</code> to each chunk so context is never lost.</span>
+                                            </div>
+                                        </div>
+                                        <div class="rule-item">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <div class="rule-item-content">
+                                                <strong>Atomic Tables &amp; Structures</strong>
+                                                <span>Keeps complete Markdown tables, card tiers, customer profiles, and code blocks together.</span>
+                                            </div>
+                                        </div>
+                                        <div class="rule-item">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <div class="rule-item-content">
+                                                <strong>Self-Contained Retrieval</strong>
+                                                <span>Every chunk is immediately understandable on its own without requiring adjacent chunks.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="quick-rule-chips">
+                                        <span class="chips-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Quick Rule Presets:</span>
+                                        <button type="button" class="rule-chip" data-rule="Preserve all markdown tables and lists completely intact within single chunks.">+ Keep Tables Intact</button>
+                                        <button type="button" class="rule-chip" data-rule="Prepend hierarchical breadcrumbs (# Doc > ## Section) to every chunk.">+ Breadcrumb Headers</button>
+                                        <button type="button" class="rule-chip" data-rule="Group by QA feature category or card tier into cohesive chunks.">+ Group by QA Feature</button>
+                                        <button type="button" class="rule-chip" data-rule="Enforce substantive sizing of 300-1200 characters per conceptual chunk.">+ 300-1200 Chars per Chunk</button>
+                                    </div>
+                                </div>
+
+                                <div class="input-group" style="margin-top: 10px;">
+                                    <label for="llm-chunk-instructions">Custom Instructions for Gemini Semantic Splitting</label>
                                     <input type="text" id="llm-chunk-instructions" placeholder="e.g. 'Preserve all table rows together', 'Split cards into tier-specific chunks', 'Include document title in every chunk'">
-                                    <span class="input-hint">Leave blank to let Gemini automatically preserve complete context and headings</span>
+                                    <span class="input-hint">Click preset chips above or type custom instructions. Leave blank to let Gemini apply default semantic rules.</span>
                                 </div>
                             </div>
 
@@ -655,6 +701,18 @@
 
                             <!-- Interactive Chunks Preview Container -->
                             <div id="chunks-preview-container" class="chunks-preview-container" style="display: none;">
+                                <!-- LLM Fallback Warning Notice Banner -->
+                                <div id="fallback-warning-banner" class="fallback-warning-banner" style="display: none;">
+                                    <div class="fallback-banner-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                    <div class="fallback-banner-body">
+                                        <div class="fallback-banner-title"><i class="fa-solid fa-server"></i> LLM Service Notice: Markdown Semantic Fallback Active</div>
+                                        <div class="fallback-banner-desc" id="fallback-banner-desc">Gemini LLM model was temporarily experiencing high demand (503 Service Unavailable). Intelligent Markdown Semantic Chunker was used as fallback to preserve tables and context without loss.</div>
+                                    </div>
+                                    <button type="button" class="btn-retry-llm" id="btn-retry-llm-banner">
+                                        <i class="fa-solid fa-rotate"></i> <span>Retry with LLM</span>
+                                    </button>
+                                </div>
+
                                 <div class="preview-header-bar">
                                     <div class="preview-summary-meta">
                                         <h4><i class="fa-solid fa-list-check"></i> Chunk Preview (<span id="preview-total-count">0</span> Chunks)</h4>

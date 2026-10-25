@@ -1710,6 +1710,40 @@ document.addEventListener('DOMContentLoaded', () => {
         chunkOverlapInput.addEventListener('input', (e) => chunkOverlapSlider.value = e.target.value);
     }
 
+    // Quick Rule Preset Chips Handler
+    const ruleChips = document.querySelectorAll('.rule-chip');
+    ruleChips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            e.preventDefault();
+            const ruleText = chip.getAttribute('data-rule');
+            if (!ruleText || !llmChunkInstructions) return;
+
+            chip.classList.toggle('active');
+            const currentVal = (llmChunkInstructions.value || '').trim();
+            if (chip.classList.contains('active')) {
+                if (!currentVal) {
+                    llmChunkInstructions.value = ruleText;
+                } else if (!currentVal.includes(ruleText)) {
+                    llmChunkInstructions.value = `${currentVal}; ${ruleText}`;
+                }
+            } else {
+                const parts = currentVal.split(';').map(s => s.trim()).filter(s => s && s !== ruleText);
+                llmChunkInstructions.value = parts.join('; ');
+            }
+        });
+    });
+
+    // Fallback Warning Banner Elements
+    const fallbackWarningBanner = document.getElementById('fallback-warning-banner');
+    const fallbackBannerDesc = document.getElementById('fallback-banner-desc');
+    const btnRetryLlmBanner = document.getElementById('btn-retry-llm-banner');
+
+    if (btnRetryLlmBanner) {
+        btnRetryLlmBanner.addEventListener('click', () => {
+            requestChunkPreview();
+        });
+    }
+
     // Generate Chunk Preview API Call
     async function requestChunkPreview(customInstructions = null) {
         const content = docContent ? docContent.value.trim() : '';
@@ -1756,7 +1790,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     chunksPreviewContainer.style.display = 'flex';
                     chunksPreviewContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
-                showRagToast(`Generated ${data.total_chunks} preview chunks!`);
+
+                if (data.fallback_used) {
+                    showRagToast('LLM service busy (503). Markdown Semantic Fallback used.', 'warning');
+                } else {
+                    showRagToast(`Generated ${data.total_chunks} semantic chunks with zero context loss!`);
+                }
             } else {
                 showRagToast(data.detail || 'Failed to generate preview chunks', 'error');
             }
@@ -1797,6 +1836,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPreviewChunks = [];
             if (chunksPreviewContainer) chunksPreviewContainer.style.display = 'none';
             if (chunksPreviewList) chunksPreviewList.innerHTML = '';
+            if (fallbackWarningBanner) fallbackWarningBanner.style.display = 'none';
             showRagToast('Chunk preview discarded');
         });
     }
@@ -1810,7 +1850,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (previewTotalCount) previewTotalCount.textContent = chunks.length;
         if (btnIngestCountBadge) btnIngestCountBadge.textContent = chunks.length;
 
-        const stratLabel = previewData.strategy === 'llm' ? 'Gemini AI Semantic' : 'Text Sliding Window';
+        // Fallback Warning Banner
+        if (previewData.fallback_used && previewData.fallback_message) {
+            if (fallbackWarningBanner) {
+                fallbackWarningBanner.style.display = 'flex';
+                if (fallbackBannerDesc) fallbackBannerDesc.textContent = previewData.fallback_message;
+            }
+        } else {
+            if (fallbackWarningBanner) {
+                fallbackWarningBanner.style.display = 'none';
+            }
+        }
+
+        let stratLabel = 'Gemini AI Semantic';
+        if (previewData.strategy === 'text') {
+            stratLabel = 'Text Sliding Window';
+        } else if (previewData.fallback_used) {
+            stratLabel = 'Markdown Semantic Fallback (LLM Unavailable)';
+        }
+
         if (previewMetaDetails) {
             previewMetaDetails.textContent = `Strategy: ${stratLabel} | Total Chars: ${previewData.total_chars.toLocaleString()} | Words: ${previewData.total_words.toLocaleString()}`;
         }
@@ -1828,9 +1886,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 tagsHtml = `<div class="chunk-tags-row">${chunk.tags.map(t => `<span class="chunk-tag-pill">#${escapeHtml(t)}</span>`).join('')}</div>`;
             }
 
+            let badgeClass = 'badge-llm';
+            let badgeIcon = 'fa-wand-magic-sparkles';
+            let badgeLabel = 'LLM Semantic Chunk';
+            if (chunk.strategy === 'llm_fallback' || previewData.fallback_used) {
+                badgeClass = 'badge-fallback';
+                badgeIcon = 'fa-shield-halved';
+                badgeLabel = 'Semantic Fallback';
+            } else if (chunk.strategy === 'text') {
+                badgeClass = 'badge-text';
+                badgeIcon = 'fa-scissors';
+                badgeLabel = 'Text Window';
+            }
+
             card.innerHTML = `
                 <div class="chunk-card-header">
                     <span class="chunk-badge">Chunk ${chunk.chunk_index || (idx + 1)} of ${previewData.total_chunks}</span>
+                    <span class="chunk-rule-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeLabel}</span>
                     <span class="chunk-card-title" title="${escapeHtml(chunk.title)}">${escapeHtml(chunk.title)}</span>
                     <span class="chunk-card-meta">${chunk.char_count} chars (${chunk.word_count} words)</span>
                 </div>

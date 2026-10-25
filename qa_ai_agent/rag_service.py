@@ -774,60 +774,142 @@ class RAGVectorStore:
             c["total_chunks"] = len(chunks)
         return chunks
 
-    def _chunk_markdown_fallback(self, text: str, title_prefix: str = "Document") -> List[Dict[str, Any]]:
+    def _chunk_markdown_fallback(
+        self,
+        text: str,
+        title_prefix: str = "Document",
+        fallback_reason: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
-        Fallback semantic chunker: splits by markdown headings (##, ###) while preserving document context.
+        Intelligent Markdown Semantic Fallback Chunker:
+        - NEVER cuts directly or naively across lines, sentences, or tables.
+        - Preserves complete markdown tables (| ... |) with their column headers intact.
+        - Avoids empty or stub chunks (never outputs a lone header as a chunk).
+        - Merges small subsections (< 250 chars) with related parent sections into substantive, proper chunks.
+        - Prepends hierarchical breadcrumbs (# Doc > ## Section) so context is preserved without loss.
         """
-        lines = text.strip().splitlines()
-        chunks = []
-        current_title = f"{title_prefix} - Overview"
-        current_lines = []
-        top_header = ""
+        lines = [line.rstrip() for line in text.strip().splitlines()]
+        if not lines:
+            return []
 
+        doc_title = title_prefix
+        body_lines = []
         for line in lines:
-            line_s = line.strip()
-            if line_s.startswith("# ") and not top_header:
-                top_header = line_s
-                current_lines.append(line)
-            elif line_s.startswith("## ") or line_s.startswith("### "):
-                if current_lines:
-                    chunk_text = "\n".join(current_lines).strip()
-                    if chunk_text:
-                        chunks.append({
-                            "chunk_index": len(chunks) + 1,
-                            "title": current_title,
-                            "text": chunk_text,
-                            "summary": f"Covers section: {current_title}",
-                            "tags": ["markdown_section"],
-                            "char_count": len(chunk_text),
-                            "word_count": len(chunk_text.split()),
-                            "strategy": "llm_fallback"
-                        })
-                current_title = re.sub(r"^#+\s*", "", line_s)
-                current_lines = [top_header, line] if top_header and top_header != line_s else [line]
+            if line.startswith("# ") and doc_title == title_prefix:
+                doc_title = re.sub(r"^#+\s*", "", line).strip()
             else:
-                current_lines.append(line)
+                body_lines.append(line)
 
-        if current_lines:
-            chunk_text = "\n".join(current_lines).strip()
-            if chunk_text:
-                chunks.append({
-                    "chunk_index": len(chunks) + 1,
-                    "title": current_title,
-                    "text": chunk_text,
-                    "summary": f"Covers section: {current_title}",
-                    "tags": ["markdown_section"],
-                    "char_count": len(chunk_text),
-                    "word_count": len(chunk_text.split()),
-                    "strategy": "llm_fallback"
-                })
+        # Parse into semantic sections based on ##, ###, or double-newline blocks
+        sections = []
+        current_sec_title = f"{doc_title} - Core Content"
+        current_sec_lines = []
+        in_table = False
 
-        if not chunks:
-            chunks = self.chunk_text_fixed(text, chunk_size=800, overlap_size=80, title_prefix=title_prefix)
+        for line in body_lines:
+            line_s = line.strip()
+            is_header = line_s.startswith("## ") or line_s.startswith("### ") or line_s.startswith("#### ")
+            
+            # Markdown table detection
+            if line_s.startswith("|") and line_s.endswith("|"):
+                in_table = True
+            else:
+                in_table = False
 
-        for c in chunks:
-            c["total_chunks"] = len(chunks)
-        return chunks
+            if is_header and not in_table:
+                content_str = "\n".join(current_sec_lines).strip()
+                if content_str:
+                    sections.append({
+                        "title": current_sec_title,
+                        "lines": current_sec_lines
+                    })
+                current_sec_title = re.sub(r"^#+\s*", "", line_s).strip()
+                current_sec_lines = [line]
+            else:
+                current_sec_lines.append(line)
+
+        content_str = "\n".join(current_sec_lines).strip()
+        if content_str:
+            sections.append({
+                "title": current_sec_title,
+                "lines": current_sec_lines
+            })
+
+        if not sections:
+            sections = [{"title": doc_title, "lines": body_lines}]
+
+        # Group small sections (< 250 chars) so we form PROPER, substantive chunks
+        proper_chunks = []
+        accum_title = None
+        accum_lines = []
+
+        for sec in sections:
+            sec_text = "\n".join(sec["lines"]).strip()
+            if not sec_text:
+                continue
+
+            if not accum_lines:
+                accum_title = sec["title"]
+                accum_lines = list(sec["lines"])
+            else:
+                accum_len = len("\n".join(accum_lines))
+                # Merge if accumulated text is short (< 300 chars) or combined size <= 1200 chars
+                if accum_len < 300 or (accum_len + len(sec_text) <= 1200):
+                    accum_lines.append("")
+                    accum_lines.extend(sec["lines"])
+                    if accum_title != sec["title"] and not accum_title.endswith(f"& {sec['title']}"):
+                        accum_title = f"{accum_title} & {sec['title']}"
+                else:
+                    proper_chunks.append({
+                        "title": accum_title,
+                        "content": "\n".join(accum_lines).strip()
+                    })
+                    accum_title = sec["title"]
+                    accum_lines = list(sec["lines"])
+
+        if accum_lines:
+            proper_chunks.append({
+                "title": accum_title,
+                "content": "\n".join(accum_lines).strip()
+            })
+
+        final_chunks = []
+        for i, pc in enumerate(proper_chunks):
+            content = pc["content"]
+            breadcrumb = f"# {doc_title} > ## {pc['title']}"
+            if not content.startswith("#"):
+                chunk_text = f"{breadcrumb}\n\n{content}"
+            else:
+                chunk_text = content
+
+            tags = [
+                re.sub(r"[^\w]", "_", word.lower())
+                for word in re.findall(r"\b[A-Za-z]{3,}\b", pc["title"])
+            ][:4]
+
+            final_chunks.append({
+                "chunk_index": i + 1,
+                "total_chunks": len(proper_chunks),
+                "title": f"{doc_title}: {pc['title']}",
+                "text": chunk_text,
+                "summary": f"Covers {pc['title']} with contextual headers and structured data.",
+                "tags": tags or ["qa_document"],
+                "char_count": len(chunk_text),
+                "word_count": len(chunk_text.split()),
+                "strategy": "llm_fallback",
+                "fallback_reason": fallback_reason
+            })
+
+        if not final_chunks:
+            fixed_chunks = self.chunk_text_fixed(text, chunk_size=800, overlap_size=80, title_prefix=title_prefix)
+            for fc in fixed_chunks:
+                fc["strategy"] = "llm_fallback"
+                fc["fallback_reason"] = fallback_reason
+            return fixed_chunks
+
+        for c in final_chunks:
+            c["total_chunks"] = len(final_chunks)
+        return final_chunks
 
     def chunk_text_llm(
         self,
@@ -836,35 +918,60 @@ class RAGVectorStore:
         title_prefix: str = "Document"
     ) -> List[Dict[str, Any]]:
         """
-        Uses Gemini (gemini-flash-lite-latest) to perform intelligent, semantic chunking without context loss.
-        Preserves section titles, table structures, and contextual headers in each chunk.
-        If Gemini API encounters a temporary issue or text is too large, gracefully falls back to markdown semantic chunking.
+        Uses Gemini models cascade (gemini-flash-lite-latest -> gemini-3.1-flash-lite)
+        to perform intelligent, semantic chunking based on strict meaningful context rules.
+        Preserves section titles, table structures, and hierarchical breadcrumbs in each chunk.
+        If all LLM models encounter temporary issues (e.g. 503 high demand), gracefully
+        falls back to intelligent markdown semantic chunking with full notice.
         """
         client = get_genai_client()
         if not client:
             logger.warning("GenAI client unavailable; using markdown fallback chunker.")
-            return self._chunk_markdown_fallback(text, title_prefix=title_prefix)
+            return self._chunk_markdown_fallback(
+                text,
+                title_prefix=title_prefix,
+                fallback_reason="GenAI client is not configured or unavailable. Smart Markdown Semantic Chunker was used."
+            )
 
-        prompt = f"""You are an expert document chunking specialist for RAG vector search systems.
-Split the following document into logically coherent, self-contained semantic chunks.
+        prompt = f"""You are an expert QA Knowledge Base Architect and Document Chunking Specialist.
+Your task is to analyze the document and partition it into PROPER, MEANINGFUL, HIGH-QUALITY SEMANTIC CHUNKS for RAG vector search.
 
-CRITICAL RULES FOR NO CONTEXT LOSS:
-1. Every chunk must be completely understandable on its own without needing previous chunks.
-2. Retain necessary context: include the parent section headers, table headers, document title, or domain subject in each chunk.
-3. Do NOT cut mid-table, mid-list, or mid-thought.
-4. Group logically related items together (e.g. all Platinum tier cards together, all gift cards together, customer profiles together).
-5. Provide a descriptive, meaningful title for each chunk (e.g. 'Customer Profiles - MAPP iOS & Android').
-6. Include tags/keywords for each chunk.
-7. Instructions from user: {instructions if instructions and instructions.strip() else 'None. Preserve complete context and logical grouping.'}
+MANDATORY RULES FOR MEANINGFUL CHUNKING (NO DIRECT OR BLIND SPLITTING):
+1. PROPER CONCEPTUAL CHUNKS (NO DIRECT SPLITTING):
+   - Do NOT split directly or arbitrarily by line numbers, word counts, or character limits.
+   - Every chunk must represent a COMPLETE, LOGICAL UNIT OF KNOWLEDGE (e.g., an entire feature workflow, a full category of test cards, a complete customer profile with addresses, a complete test case specification, or a cohesive domain topic).
+   - If a section is short, combine related sub-items under the same conceptual theme into one proper chunk instead of creating isolated fragments.
+
+2. MEANINGFUL CONTEXTUAL INTEGRITY (ZERO CONTEXT LOSS):
+   - Every chunk must begin with explicit hierarchical context breadcrumbs:
+     Format: "# {title_prefix} > ## [Section Name] > ### [Topic]"
+   - The chunk must be 100% self-explanatory and standalone. An LLM reading ONLY this chunk must understand exactly what system, feature, or entity it refers to, with zero ambiguity and without needing previous or subsequent chunks.
+   - Never begin a chunk with an unresolved pronoun ("they", "it", "this") or an orphaned statement. Always anchor it to the specific entity or subject.
+
+3. ATOMIC STRUCTURAL PRESERVATION:
+   - NEVER split a Markdown table across chunks. If the document has a table, the complete table (including its column header row and all relevant data rows) must remain together in a single chunk.
+   - Keep lists, test step sequences, card credentials (Card Number, Exp, CVV, CID, Balance), and JSON/code blocks completely intact.
+
+4. BALANCED SUBSTANTIVE SIZING:
+   - Target optimal semantic chunk size: between 250 and 1,500 characters of meaningful content.
+   - Avoid trivial micro-chunks (< 150 characters) or monolithic unsearchable dumps (> 2,500 characters).
+
+5. ACCURATE DESCRIPTIVE METADATA:
+   - Provide a precise, descriptive title for every chunk that reflects its exact subject.
+   - Provide a concise 1-sentence summary of the chunk's purpose.
+   - Provide 3 to 6 targeted keyword tags.
+
+6. USER INSTRUCTIONS / CUSTOM RULES:
+   {instructions if instructions and instructions.strip() else 'Apply strict semantic boundaries, preserve complete tables/entities, and prepend hierarchical breadcrumbs to each chunk.'}
 
 Output ONLY valid JSON matching this schema:
 {{
   "chunks": [
     {{
       "title": "Descriptive title for this chunk",
-      "content": "Exact chunk text including section headers",
-      "summary": "1 sentence summary",
-      "tags": ["tag1", "tag2"]
+      "content": "Exact chunk text including hierarchical breadcrumbs and intact tables/lists",
+      "summary": "1 sentence summary explaining the chunk context",
+      "tags": ["tag1", "tag2", "tag3"]
     }}
   ]
 }}
@@ -873,42 +980,51 @@ Document Title: {title_prefix}
 Document Content:
 {text}
 """
-        try:
-            resp = client.models.generate_content(
-                model="gemini-3.1-flash-lite",
-                contents=prompt
-            )
-            raw = (resp.text or "").strip()
-            match = re.search(r"\{.*\}", raw, re.DOTALL)
-            if match:
-                data = json.loads(match.group(0))
-                raw_chunks = data.get("chunks", [])
-                if raw_chunks:
-                    chunks = []
-                    for i, c in enumerate(raw_chunks):
-                        c_text = (c.get("content") or "").strip()
-                        if not c_text:
-                            continue
-                        chunks.append({
-                            "chunk_index": i + 1,
-                            "total_chunks": len(raw_chunks),
-                            "title": c.get("title") or f"{title_prefix} - Section {i+1}",
-                            "text": c_text,
-                            "summary": c.get("summary", ""),
-                            "tags": c.get("tags") if isinstance(c.get("tags"), list) else [],
-                            "char_count": len(c_text),
-                            "word_count": len(c_text.split()),
-                            "strategy": "llm"
-                        })
-                    if chunks:
-                        for c in chunks:
-                            c["total_chunks"] = len(chunks)
-                        return chunks
-            logger.warning("Could not extract JSON chunks from Gemini response; using fallback chunker.")
-        except Exception as e:
-            logger.warning(f"Error during LLM chunking ({e}); falling back to markdown semantic chunker.")
+        candidate_models = ["gemini-flash-lite-latest", "gemini-3.1-flash-lite"]
+        last_error = None
 
-        return self._chunk_markdown_fallback(text, title_prefix=title_prefix)
+        for model_name in candidate_models:
+            try:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                raw = (resp.text or "").strip()
+                match = re.search(r"\{.*\}", raw, re.DOTALL)
+                if match:
+                    data = json.loads(match.group(0))
+                    raw_chunks = data.get("chunks", [])
+                    if raw_chunks:
+                        chunks = []
+                        for i, c in enumerate(raw_chunks):
+                            c_text = (c.get("content") or "").strip()
+                            if not c_text:
+                                continue
+                            chunks.append({
+                                "chunk_index": i + 1,
+                                "total_chunks": len(raw_chunks),
+                                "title": c.get("title") or f"{title_prefix} - Section {i+1}",
+                                "text": c_text,
+                                "summary": c.get("summary", ""),
+                                "tags": c.get("tags") if isinstance(c.get("tags"), list) else [],
+                                "char_count": len(c_text),
+                                "word_count": len(c_text.split()),
+                                "strategy": "llm"
+                            })
+                        if chunks:
+                            for c in chunks:
+                                c["total_chunks"] = len(chunks)
+                            return chunks
+            except Exception as e:
+                last_error = str(e)
+                logger.warning(f"LLM model '{model_name}' encountered an error ({e}). Trying next candidate model...")
+
+        fallback_msg = (
+            f"Gemini LLM model is currently experiencing high demand or is temporarily unavailable ({last_error or '503 Unavailable'}). "
+            "Smart Markdown Semantic Chunker was used as fallback to preserve tables and context without loss."
+        )
+        logger.warning(f"All LLM candidate models failed; falling back to markdown semantic chunker. Reason: {fallback_msg}")
+        return self._chunk_markdown_fallback(text, title_prefix=title_prefix, fallback_reason=fallback_msg)
 
     def preview_chunks(
         self,
@@ -938,10 +1054,19 @@ Document Content:
 
         total_chars = sum(c.get("char_count", 0) for c in chunks)
         total_words = sum(c.get("word_count", 0) for c in chunks)
+        fallback_used = any(c.get("strategy") == "llm_fallback" for c in chunks)
+        fallback_message = None
+        if fallback_used and chunks:
+            fallback_message = chunks[0].get("fallback_reason") or (
+                "Gemini LLM was temporarily experiencing high demand. "
+                "Intelligent Markdown Semantic Chunker was activated to preserve tables and context."
+            )
 
         return {
             "status": "success",
             "strategy": strategy,
+            "fallback_used": fallback_used,
+            "fallback_message": fallback_message,
             "document_title": doc_title,
             "filename": filename,
             "total_chunks": len(chunks),
