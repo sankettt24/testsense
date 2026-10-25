@@ -49,6 +49,19 @@
                 </button>
             </div>
 
+            <!-- Main Mode Navigation Pills (Chat vs RAG Ingestion Dashboard) -->
+            <div class="sidebar-nav-pills">
+                <button id="nav-btn-chat" class="sidebar-nav-btn active" title="Open Chat Agent">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Chat Agent</span>
+                </button>
+                <button id="nav-btn-ingest" class="sidebar-nav-btn" title="Open RAG Ingestion Dashboard">
+                    <i class="fa-solid fa-database"></i>
+                    <span>RAG Ingest</span>
+                    <span id="nav-rag-badge" class="badge-mini">43</span>
+                </button>
+            </div>
+
             <!-- Primary New Chat Action Button -->
             <button id="btn-sidebar-new-chat" class="btn-new-chat-primary" title="Start a fresh chat session">
                 <i class="fa-solid fa-plus"></i>
@@ -110,12 +123,12 @@
             <div class="sidebar-section capabilities">
                 <h3><i class="fa-solid fa-bolt"></i> Integrated Capabilities</h3>
                 <ul>
+                    <li><i class="fa-solid fa-database"></i> <span>RAG Vector Intelligence</span></li>
                     <li><i class="fa-solid fa-money-bill-wave"></i> <span>M-Money & B-Money Setup</span></li>
                     <li><i class="fa-solid fa-star"></i> <span>Star Money Rewards Setup</span></li>
                     <li><i class="fa-solid fa-tag"></i> <span>SUPC Offer Intelligence</span></li>
                     <li><i class="fa-solid fa-percent"></i> <span>PZO Offer Intelligence</span></li>
                     <li><i class="fa-solid fa-truck-fast"></i> <span>Shipment Ref & SHPSHPD</span></li>
-                    <li><i class="fa-solid fa-database"></i> <span>QA Knowledge Base Lookup</span></li>
                 </ul>
             </div>
 
@@ -124,134 +137,499 @@
                 <ul>
                     <li><i class="fa-solid fa-cart-shopping"></i> <span>Mock Order API Payload Generator</span></li>
                     <li><i class="fa-solid fa-vial-circle-check"></i> <span>LambdaTest Test Pipeline Execution</span></li>
-                    <li><i class="fa-solid fa-file-arrow-up"></i> <span>Feature Specs & Asset Ingestion</span></li>
+                    <li><i class="fa-solid fa-network-wired"></i> <span>Automated Sentinel Log Checks</span></li>
                 </ul>
             </div>
         </aside>
 
-        <!-- Main Chat Panel -->
+        <!-- Main Content Area -->
         <main class="chat-panel">
-            <header class="chat-header">
-                <div class="header-left">
-                    <button id="sidebar-toggle" class="icon-button mobile-only" title="Open Menu">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1 id="chat-header-title">TestSense AI Agent</h1>
-                        <p id="chat-header-subtitle">QA Test Data & API Automation</p>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button id="btn-header-new-chat" class="btn-header-new" title="Start New Chat">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>New Chat</span>
-                    </button>
-                    <button id="btn-clear-chat" class="icon-button" title="Clear Current Chat">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            </header>
-
-            <!-- Macy's VPN Notice Banner -->
-            <div class="vpn-notice-banner">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span><strong>Network Note:</strong> Please ensure you are connected to <strong>Macy's VPN</strong> to execute live API endpoints.</span>
-            </div>
-
-            <!-- Quick Action Shortcut Pills -->
-            <div class="shortcuts-container">
-                <span class="shortcut-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Shortcuts:</span>
-                <div class="shortcuts-scroll">
-                    <button class="shortcut-btn" data-action="m_money">
-                        <i class="fa-solid fa-money-bill-wave"></i> Add M-Money
-                    </button>
-                    <button class="shortcut-btn" data-action="star_money">
-                        <i class="fa-solid fa-star"></i> Star Money
-                    </button>
-                    <button class="shortcut-btn" data-action="shipment_ref">
-                        <i class="fa-solid fa-magnifying-glass-location"></i> Shipment Ref
-                    </button>
-                    <button class="shortcut-btn" data-action="shpshpd">
-                        <i class="fa-solid fa-truck-fast"></i> SHPSHPD Fulfillment
-                    </button>
-                    <button class="shortcut-btn" data-prompt="Fetch verified Sandbox Credit Cards test data">
-                        <i class="fa-solid fa-credit-card"></i> Sandbox Cards
-                    </button>
-                    <button class="shortcut-btn" data-prompt="Fetch Web IDs for BOPS product category">
-                        <i class="fa-solid fa-box-archive"></i> BOPS Web IDs
-                    </button>
-                    <button class="shortcut-btn" data-prompt="Generate the SUPC code details">
-                        <i class="fa-solid fa-tag"></i> SUPC Offer
-                    </button>
-                    <button class="shortcut-btn" data-prompt="Get PZO promotion details">
-                        <i class="fa-solid fa-percent"></i> PZO Offer Details
-                    </button>
-                </div>
-            </div>
-
-            <!-- Messages Stream Area -->
-            <div class="messages-container" id="messages-container">
-                <div class="welcome-message">
-                    <div class="welcome-icon">
-                        <img src="logo.png" alt="TestSense AI Logo" class="welcome-logo-img">
-                    </div>
-                    <h2>Welcome to TestSense AI</h2>
-                    <p>Your Agent is ready. Tap any suggestion prompt below to fill the chat box:</p>
-
-                    <div class="welcome-suggestions">
-                        <div class="suggestion-card" data-fill="Get shipment ref / reservation ID for customer order 1121612266">
-                            <div class="suggestion-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
-                            <div class="suggestion-text">
-                                <strong>Get Shipment Ref (Reservation ID)</strong>
-                                <span>Lookup reservation ID from order details wrapper</span>
-                            </div>
-                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
-                        </div>
-
-                        <div class="suggestion-card" data-fill="Send BOPS SHPSHPD status update for order 1121612266">
-                            <div class="suggestion-icon"><i class="fa-solid fa-truck-fast"></i></div>
-                            <div class="suggestion-text">
-                                <strong>SHPSHPD Fulfillment Status</strong>
-                                <span>Trigger BOPS/SDD/STH fulfillment update</span>
-                            </div>
-                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
-                        </div>
-
-                        <div class="suggestion-card" data-fill="I want to add M-Money in this account sanket123@gmail.com">
-                            <div class="suggestion-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
-                            <div class="suggestion-text">
-                                <strong>Add M-Money / B-Money</strong>
-                                <span>Fund target account with gift card balance</span>
-                            </div>
-                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
-                        </div>
-
-                        <div class="suggestion-card" data-fill="Add Star Money reward dollars 10 to card 6035340001257605">
-                            <div class="suggestion-icon"><i class="fa-solid fa-star"></i></div>
-                            <div class="suggestion-text">
-                                <strong>Setup Star Money Rewards</strong>
-                                <span>Load reward dollars onto Macy's card</span>
-                            </div>
-                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+            <!-- 1. CHAT AGENT VIEW -->
+            <div id="view-chat" class="view-panel active">
+                <header class="chat-header">
+                    <div class="header-left">
+                        <button id="sidebar-toggle" class="icon-button mobile-only" title="Open Menu">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <div class="header-title">
+                            <h1 id="chat-header-title">TestSense AI Agent</h1>
+                            <p id="chat-header-subtitle">QA Test Data & API Automation</p>
                         </div>
                     </div>
+                    <div class="header-actions">
+                        <button id="btn-open-ingest" class="btn-header-secondary" title="Open RAG Knowledge & Ingest Dashboard">
+                            <i class="fa-solid fa-database"></i>
+                            <span>RAG Dashboard</span>
+                            <span id="header-rag-badge" class="badge-mini-cyan">43</span>
+                        </button>
+                        <button id="btn-header-new-chat" class="btn-header-new" title="Start New Chat">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>New Chat</span>
+                        </button>
+                        <button id="btn-clear-chat" class="icon-button" title="Clear Current Chat">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Macy's VPN Notice Banner -->
+                <div class="vpn-notice-banner">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span><strong>Network Note:</strong> Please ensure you are connected to <strong>Macy's VPN</strong> to execute live API endpoints.</span>
+                </div>
+
+                <!-- Quick Action Shortcut Pills -->
+                <div class="shortcuts-container">
+                    <span class="shortcut-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Shortcuts:</span>
+                    <div class="shortcuts-scroll">
+                        <button class="shortcut-btn" data-action="m_money">
+                            <i class="fa-solid fa-money-bill-wave"></i> Add M-Money
+                        </button>
+                        <button class="shortcut-btn" data-action="star_money">
+                            <i class="fa-solid fa-star"></i> Star Money
+                        </button>
+                        <button class="shortcut-btn" data-action="shipment_ref">
+                            <i class="fa-solid fa-magnifying-glass-location"></i> Shipment Ref
+                        </button>
+                        <button class="shortcut-btn" data-action="shpshpd">
+                            <i class="fa-solid fa-truck-fast"></i> SHPSHPD Fulfillment
+                        </button>
+                        <button class="shortcut-btn" data-prompt="can you give me macys card">
+                            <i class="fa-solid fa-credit-card"></i> Macy's Cards
+                        </button>
+                        <button class="shortcut-btn" data-prompt="Fetch verified Sandbox Credit Cards test data">
+                            <i class="fa-solid fa-credit-card"></i> Sandbox Cards
+                        </button>
+                        <button class="shortcut-btn" data-prompt="Fetch Web IDs for BOPS product category">
+                            <i class="fa-solid fa-box-archive"></i> BOPS Web IDs
+                        </button>
+                        <button class="shortcut-btn" data-prompt="What features are available in the knowledge base?">
+                            <i class="fa-solid fa-rocket"></i> RAG Features
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages Stream Area -->
+                <div class="messages-container" id="messages-container">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">
+                            <img src="logo.png" alt="TestSense AI Logo" class="welcome-logo-img">
+                        </div>
+                        <h2>Welcome to TestSense AI</h2>
+                        <p>Powered by Google ADK with <strong>RAG Vector Intelligence</strong>. Tap any suggestion prompt below to fill the chat box:</p>
+
+                        <div class="welcome-suggestions">
+                            <div class="suggestion-card" data-fill="can you give me macys card">
+                                <div class="suggestion-icon"><i class="fa-solid fa-credit-card"></i></div>
+                                <div class="suggestion-text">
+                                    <strong>Get Macy's Prop Cards (RAG)</strong>
+                                    <span>Retrieve Prop Gold, Platinum, Amex, & BT cards</span>
+                                </div>
+                                <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                            </div>
+
+                            <div class="suggestion-card" data-fill="Fetch Web IDs for BOPS product category">
+                                <div class="suggestion-icon"><i class="fa-solid fa-box-archive"></i></div>
+                                <div class="suggestion-text">
+                                    <strong>BOPS Web IDs Lookup (RAG)</strong>
+                                    <span>Vector search for BOPS product SKUs and store zips</span>
+                                </div>
+                                <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                            </div>
+
+                            <div class="suggestion-card" data-fill="Tell me about the BOPS Same-Day Store Fulfillment feature and its watchouts">
+                                <div class="suggestion-icon"><i class="fa-solid fa-rocket"></i></div>
+                                <div class="suggestion-text">
+                                    <strong>Feature Specs & Video Demo (RAG)</strong>
+                                    <span>Query acceptance criteria, edge cases & demo links</span>
+                                </div>
+                                <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                            </div>
+
+                            <div class="suggestion-card" data-fill="Get shipment ref / reservation ID for customer order 1121612266">
+                                <div class="suggestion-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+                                <div class="suggestion-text">
+                                    <strong>Get Shipment Ref (Reservation ID)</strong>
+                                    <span>Lookup reservation ID from order details wrapper</span>
+                                </div>
+                                <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Box Container -->
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'can you give me macys card', 'BOPS Web IDs', or 'Star Money feature')..." rows="1"></textarea>
+                        <button id="btn-send" class="btn primary" disabled>
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="input-footer">
+                        <span class="footer-hint">Press <strong>Enter</strong> to send</span>
+                        <span class="security-badge"><i class="fa-solid fa-brain"></i> RAG Vector Search Active</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Input Box Container -->
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'Get shipment ref for order 1121612266')..." rows="1"></textarea>
-                    <button id="btn-send" class="btn primary" disabled>
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </div>
-                <div class="input-footer">
-                    <span class="footer-hint">Press <strong>Enter</strong> to send</span>
-                    <span class="security-badge"><i class="fa-solid fa-shield-halved"></i> Guardrails Active</span>
+            <!-- 2. RAG DATA INGESTION DASHBOARD VIEW -->
+            <div id="view-ingest" class="view-panel" style="display: none;">
+                <header class="dashboard-header">
+                    <div class="header-left">
+                        <button id="ingest-sidebar-toggle" class="icon-button mobile-only" title="Open Menu">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <div class="header-title">
+                            <h1><i class="fa-solid fa-database" style="color: var(--accent-blue);"></i> ChromaDB Vector Knowledge Dashboard</h1>
+                            <p>Persistent Vector Database for QA Features, Payment Cards, and Test Data with Granular Selection & Control</p>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button id="btn-back-to-chat" class="btn-header-new" title="Return to Chat Agent">
+                            <i class="fa-solid fa-arrow-left"></i> <span>Back to Chat</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="dashboard-body">
+                    <!-- Metrics Cards Grid -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-blue);">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">ChromaDB Vectors</span>
+                                <h3 id="stat-total-vectors">43</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon" style="background: rgba(168, 85, 247, 0.15); color: var(--accent-purple);">
+                                <i class="fa-solid fa-rocket"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Features Ingested</span>
+                                <h3 id="stat-features-count">3</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Cards & Payment Data</span>
+                                <h3 id="stat-cards-count">19</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-amber);">
+                                <i class="fa-solid fa-box-archive"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Web IDs & Test Data</span>
+                                <h3 id="stat-testdata-count">21</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingestion Hub Section -->
+                    <div class="ingest-hub-card">
+                        <div class="hub-header">
+                            <div class="hub-title-block">
+                                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Knowledge Ingestion & ChromaDB Generator</h2>
+                                <p>Select an entity type to populate its specialized chunking schema:</p>
+                            </div>
+                            <div class="ingest-tabs">
+                                <button class="ingest-tab-btn active" data-tab="feature">
+                                    <i class="fa-solid fa-rocket"></i> <span>New Feature</span>
+                                </button>
+                                <button class="ingest-tab-btn" data-tab="card">
+                                    <i class="fa-solid fa-credit-card"></i> <span>New Card</span>
+                                </button>
+                                <button class="ingest-tab-btn" data-tab="testdata">
+                                    <i class="fa-solid fa-box-archive"></i> <span>Test Data / Web ID</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Form 1: Feature Ingestion Form -->
+                        <form id="form-ingest-feature" class="ingest-form active">
+                            <div class="form-banner feature-banner">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span><strong>Feature Chunking Rule:</strong> Embeds Expected Behavior, Watchout Issues, Acceptance Criteria, and direct links for Screenshots and Video Walkthroughs.</span>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="feature-name">Feature Name <span class="required-star">*</span></label>
+                                    <input type="text" id="feature-name" placeholder="e.g. One-Click Apple Pay Express Checkout" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="feature-platform">Target Platform / Channel</label>
+                                    <select id="feature-platform">
+                                        <option value="All Platforms" selected>All Platforms (MCOM & BCOM)</option>
+                                        <option value="MCOM Site">MCOM Site</option>
+                                        <option value="MCOM App">MCOM App</option>
+                                        <option value="BCOM Site">BCOM Site</option>
+                                        <option value="BCOM iOS">BCOM iOS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="feature-expected">Expected Behavior & Business Requirements <span class="required-star">*</span></label>
+                                <textarea id="feature-expected" rows="3" placeholder="Explain what the feature should do when working correctly..." required></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="feature-issues">Potential Issues & Edge Cases Faced</label>
+                                    <textarea id="feature-issues" rows="3" placeholder="What issues or bugs have been observed? (e.g. network timeout, tax mismatch, stock lock)"></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label for="feature-observe">Things to Observe & Acceptance Criteria</label>
+                                    <textarea id="feature-observe" rows="3" placeholder="Key verification points (e.g. verify reservationId in wrapper, check 200 response in Sentinel)"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="feature-image"><i class="fa-solid fa-image"></i> Image / Screenshot Asset Link</label>
+                                    <input type="url" id="feature-image" placeholder="https://images.unsplash.com/... or screenshot URL">
+                                </div>
+                                <div class="input-group">
+                                    <label for="feature-video"><i class="fa-solid fa-video"></i> Video Demo / Recording Link</label>
+                                    <input type="url" id="feature-video" placeholder="https://example.com/videos/demo.mp4">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" id="btn-submit-feature" class="btn primary btn-glow">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Vectorize & Store in ChromaDB</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Form 2: Card Ingestion Form -->
+                        <form id="form-ingest-card" class="ingest-form" style="display: none;">
+                            <div class="form-banner card-banner">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span><strong>Card Chunking Rule:</strong> Embeds Card Type, Account Number, CVV, Expiry, Amount, and Billing Address with credit/loyalty token boosts.</span>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="card-type">Card Type <span class="required-star">*</span></label>
+                                    <select id="card-type">
+                                        <option value="Prop Gold" selected>Prop Gold (Macy's)</option>
+                                        <option value="Prop Platinum">Prop Platinum (Macy's)</option>
+                                        <option value="Macy's Amex">Macy's Amex</option>
+                                        <option value="Macy's Amex BT">Macy's Amex BT (Big Ticket)</option>
+                                        <option value="Visa">Credit Card - Visa</option>
+                                        <option value="MasterCard">Credit Card - MasterCard</option>
+                                        <option value="Discover">Credit Card - Discover</option>
+                                        <option value="American Express">Credit Card - Amex</option>
+                                        <option value="Gift Card">Gift Card (M-Money / B-Money)</option>
+                                        <option value="Loyalty Card">Macy's Loyalty Card</option>
+                                        <option value="Sandbox Card">Sandbox Universal Card</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="card-number">Card Number <span class="required-star">*</span></label>
+                                    <input type="text" id="card-number" placeholder="e.g. 6035340001257605" required>
+                                </div>
+                                <div class="input-group" style="max-width: 130px;">
+                                    <label for="card-cid">CVV / CID</label>
+                                    <input type="text" id="card-cid" placeholder="655">
+                                </div>
+                                <div class="input-group" style="max-width: 130px;">
+                                    <label for="card-exp">Exp Date</label>
+                                    <input type="text" id="card-exp" placeholder="07/29">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="card-amount">Balance / Amount (if Gift Card)</label>
+                                    <input type="text" id="card-amount" placeholder="e.g. $50.00">
+                                </div>
+                                <div class="input-group">
+                                    <label for="card-address">Associated Billing Address</label>
+                                    <input type="text" id="card-address" placeholder="e.g. 680 Folsom Street 100, SAN FRANCISCO, CA 94107">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="card-notes">Notes / Channel Usage</label>
+                                <input type="text" id="card-notes" placeholder="e.g. Verified working in mcom-170 checkout flow">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" id="btn-submit-card" class="btn primary btn-glow">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Vectorize & Store in ChromaDB</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Form 3: Test Data Ingestion Form -->
+                        <form id="form-ingest-testdata" class="ingest-form" style="display: none;">
+                            <div class="form-banner testdata-banner">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span><strong>Test Data Chunking Rule:</strong> Chunks Web ID, Product Name, Category Type (BOPS, SHIP, BOSS, etc.), Zip code, and fulfillment notes.</span>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="testdata-category">Category / Order Type <span class="required-star">*</span></label>
+                                    <input type="text" id="testdata-category" list="category-suggestions" placeholder="e.g. BOPS, SHIP, BOSS, GWP, 3P, CHANEL PDP" required>
+                                    <datalist id="category-suggestions">
+                                        <option value="BOPS">
+                                        <option value="BOSS">
+                                        <option value="SHIP">
+                                        <option value="GWP">
+                                        <option value="VGC">
+                                        <option value="EGC">
+                                        <option value="2 TIER">
+                                        <option value="PWP">
+                                        <option value="3P">
+                                        <option value="COLOR & SIZE PDP">
+                                        <option value="CHANEL PDP">
+                                        <option value="BT - BIG TICKET">
+                                        <option value="LTL">
+                                        <option value="WNM">
+                                        <option value="PAYPAL">
+                                    </datalist>
+                                </div>
+                                <div class="input-group">
+                                    <label for="testdata-id">Product Web ID / SKU <span class="required-star">*</span></label>
+                                    <input type="text" id="testdata-id" placeholder="e.g. 86800" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="testdata-zip">Zip Code / Store</label>
+                                    <input type="text" id="testdata-zip" placeholder="e.g. 22102">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="testdata-name">Product Name / Title</label>
+                                    <input type="text" id="testdata-name" placeholder="e.g. Men's Classic Wool Winter Overcoat">
+                                </div>
+                                <div class="input-group">
+                                    <label for="testdata-desc">Description & Fulfillment Notes</label>
+                                    <input type="text" id="testdata-desc" placeholder="e.g. Verified in mcom-131 for pickup testing">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" id="btn-submit-testdata" class="btn primary btn-glow">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Vectorize & Store in ChromaDB</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Semantic Vector Search Playground -->
+                    <div class="search-playground-card">
+                        <div class="playground-header">
+                            <div class="hub-title-block">
+                                <h3><i class="fa-solid fa-magnifying-glass-chart"></i> Semantic ChromaDB Search Tester</h3>
+                                <p>Query ChromaDB vectors in real-time to inspect cosine similarity scores and matched chunk structures:</p>
+                            </div>
+                        </div>
+                        <div class="search-tester-bar">
+                            <input type="text" id="tester-search-input" placeholder="Type a query (e.g. 'can you give me macys card', 'BOPS web id', 'Star Money feature video')...">
+                            <button id="btn-test-search" class="btn primary"><i class="fa-solid fa-search"></i> Search Vectors</button>
+                        </div>
+                        <div id="tester-search-results" class="search-results-tray">
+                            <span class="tray-placeholder">Enter a test query above and click 'Search Vectors' to evaluate retrieval scores and matching chunks.</span>
+                        </div>
+                    </div>
+
+                    <!-- Vector Knowledge Base Explorer with Content Breakdown & Multi-Select -->
+                    <div class="kb-explorer-card">
+                        <div class="explorer-header">
+                            <div class="explorer-title-row">
+                                <div>
+                                    <h3><i class="fa-solid fa-cubes"></i> ChromaDB Knowledge Base Index</h3>
+                                    <p class="section-subtitle">Browse, filter by data type, or select specific items to delete from ChromaDB</p>
+                                </div>
+                                <div class="explorer-filters">
+                                    <button class="filter-pill active" data-filter="all">All Vectors (<span id="count-filter-all">43</span>)</button>
+                                    <button class="filter-pill" data-filter="feature">Features (<span id="count-filter-feature">3</span>)</button>
+                                    <button class="filter-pill" data-filter="card">Cards (<span id="count-filter-card">19</span>)</button>
+                                    <button class="filter-pill" data-filter="test_data">Test Data (<span id="count-filter-testdata">21</span>)</button>
+                                </div>
+                            </div>
+
+                            <!-- What Kind of Data is Present in the Vector DB (Composition Breakdown) -->
+                            <div class="kb-breakdown-panel">
+                                <div class="breakdown-header">
+                                    <span><i class="fa-solid fa-chart-pie"></i> <strong>What's in ChromaDB?</strong> Tap any category to filter:</span>
+                                </div>
+                                <div class="breakdown-tags-row" id="breakdown-tags-container">
+                                    <!-- Dynamically filled with category & card type tags -->
+                                </div>
+                            </div>
+
+                            <!-- Multi-Select Action Toolbar -->
+                            <div class="explorer-selection-bar">
+                                <div class="selection-left">
+                                    <label class="custom-checkbox-label">
+                                        <input type="checkbox" id="select-all-visible">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Select All Visible (<span id="visible-count">43</span>)</span>
+                                    </label>
+                                    <span id="selected-badge" class="selection-pill" style="display: none;">
+                                        <i class="fa-solid fa-check-double"></i> <span id="selected-count">0</span> selected
+                                    </span>
+                                </div>
+                                <div class="selection-actions">
+                                    <button id="btn-delete-selected" class="btn btn-danger-glow" style="display: none;" title="Delete selected items from ChromaDB">
+                                        <i class="fa-solid fa-trash-can"></i> <span>Delete Selected (<span id="btn-selected-num">0</span>)</span>
+                                    </button>
+                                    <button id="btn-deselect-all" class="btn btn-secondary-compact" style="display: none;" title="Clear selection">
+                                        <i class="fa-solid fa-xmark"></i> <span>Clear</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="explorer-search-row">
+                                <input type="text" id="kb-filter-input" placeholder="Search ChromaDB vectors by title, Web ID, card number, or keywords...">
+                            </div>
+                        </div>
+
+                        <!-- Documents Grid Container -->
+                        <div id="kb-documents-container" class="kb-cards-container">
+                            <!-- Dynamically populated document cards with checkboxes and delete options -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Confirm Vector Deletion</h3>
+                <button id="delete-confirm-close" class="icon-button" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-confirm-message">Are you sure you want to delete the selected document(s) from ChromaDB?</p>
+                <div id="delete-confirm-list" class="delete-items-list">
+                    <!-- Populated with item titles -->
+                </div>
+                <p class="warning-subtext"><i class="fa-solid fa-circle-exclamation"></i> This action removes their vector embeddings from ChromaDB immediately.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="delete-confirm-cancel" class="btn secondary">Cancel</button>
+                <button id="delete-confirm-proceed" class="btn btn-danger-glow"><i class="fa-solid fa-trash-can"></i> Delete from ChromaDB</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Preview Modal for Video/Images -->
+    <div id="media-preview-modal" class="modal-overlay">
+        <div class="modal-card media-modal-card">
+            <div class="modal-header">
+                <h3 id="media-modal-title"><i class="fa-solid fa-photo-film"></i> Media Asset Preview</h3>
+                <button id="media-modal-close" class="icon-button" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="media-modal-body">
+                <!-- Media dynamically inserted -->
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

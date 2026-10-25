@@ -383,29 +383,92 @@ async def run_agent(request: RunAgentRequest):
 
     return serialized
 
-# Simplified REST Chat Endpoint
-class ChatRequest(BaseModel):
-    prompt: str
-    user_id: Optional[str] = "qa_tester"
-    session_id: Optional[str] = "default_session"
+# ==============================================================================
+# RAG Vector Store & Ingestion Dashboard API Endpoints
+# ==============================================================================
+from rag_service import rag_store
 
-class ChatResponse(BaseModel):
-    status: str
-    agent_name: str
-    response: str
-    session_id: str
+class RAGIngestRequest(BaseModel):
+    entity_type: str  # "feature", "card", "test_data"
+    data: Optional[Dict[str, Any]] = None
+    payload: Optional[Dict[str, Any]] = None
 
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest):
-    if not request.prompt or not request.prompt.strip():
-        raise HTTPException(status_code=400, detail="Prompt cannot be empty.")
+class RAGSearchRequest(BaseModel):
+    query: str
+    top_k: Optional[int] = 5
+    limit: Optional[int] = None
+    filter_type: Optional[str] = None
 
-    return ChatResponse(
-        status="success",
-        agent_name=root_agent.name,
-        response=f"Received prompt: {request.prompt}",
-        session_id=request.session_id
-    )
+class RAGBatchDeleteRequest(BaseModel):
+    ids: List[str]
+
+@app.get("/api/rag/stats")
+async def get_rag_stats():
+    """Returns total vector count and breakdown by entity type, category, and card type from ChromaDB."""
+    return rag_store.get_stats()
+
+@app.get("/api/rag/documents")
+async def list_rag_documents(filter_type: Optional[str] = None, search: Optional[str] = None):
+    """Lists all vectorized documents from ChromaDB with optional filtering and search."""
+    docs = rag_store.list_documents(filter_type=filter_type)
+    if search and search.strip():
+        q = search.strip().lower()
+        docs = [d for d in docs if q in d.get("title", "").lower() or q in d.get("chunk_text", "").lower()]
+    return {"documents": docs, "total": len(docs)}
+
+@app.post("/api/rag/ingest")
+async def ingest_rag_document(req: RAGIngestRequest):
+    """
+    Ingests a new feature, card, or test data entity.
+    Applies specialized chunking, converts to vector embeddings, and stores in ChromaDB.
+    """
+    if req.entity_type not in ["feature", "card", "test_data"]:
+        raise HTTPException(status_code=400, detail="entity_type must be 'feature', 'card', or 'test_data'.")
+    
+    payload = req.data if req.data is not None else req.payload
+    if not payload or not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="data/payload cannot be empty.")
+
+    try:
+        chunk = rag_store.ingest(req.entity_type, payload)
+        # Return without the raw embedding vector
+        clean_chunk = {k: v for k, v in chunk.items() if k != "embedding"}
+        return {
+            "status": "success",
+            "message": f"Successfully vectorized and ingested {req.entity_type} into ChromaDB Knowledge Base.",
+            "document": clean_chunk
+        }
+    except Exception as e:
+        logger.error(f"Error during RAG ingestion: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to ingest: {str(e)}")
+
+@app.delete("/api/rag/documents/{doc_id}")
+async def delete_rag_document(doc_id: str):
+    """Deletes a single document from ChromaDB."""
+    success = rag_store.delete(doc_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Document ID not found in vector store.")
+    return {"status": "success", "message": f"Deleted document {doc_id} from ChromaDB."}
+
+@app.post("/api/rag/documents/batch-delete")
+async def batch_delete_rag_documents(req: RAGBatchDeleteRequest):
+    """Deletes a selected batch of documents from ChromaDB."""
+    if not req.ids:
+        raise HTTPException(status_code=400, detail="Document IDs list cannot be empty.")
+    deleted_count = rag_store.delete_batch(req.ids)
+    return {
+        "status": "success",
+        "message": f"Successfully deleted {deleted_count} documents from ChromaDB.",
+        "deleted_count": deleted_count
+    }
+
+@app.post("/api/rag/search")
+async def search_rag_vectors(req: RAGSearchRequest):
+    if not req.query or not req.query.strip():
+        raise HTTPException(status_code=400, detail="Search query cannot be empty.")
+    top_k = req.limit or req.top_k or 5
+    results = rag_store.search(query=req.query, top_k=top_k, filter_type=req.filter_type)
+    return {"query": req.query, "results": results, "count": len(results)}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

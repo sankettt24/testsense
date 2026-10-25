@@ -1018,6 +1018,893 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
+    // RAG Data Ingestion & Knowledge Base Dashboard Integration
+    // =========================================================================
+
+    // Navigation & Views
+    const navBtnChat = document.getElementById('nav-btn-chat');
+    const navBtnIngest = document.getElementById('nav-btn-ingest');
+    const btnOpenIngest = document.getElementById('btn-open-ingest');
+    const btnBackToChat = document.getElementById('btn-back-to-chat');
+    const ingestSidebarToggle = document.getElementById('ingest-sidebar-toggle');
+    const viewChat = document.getElementById('view-chat');
+    const viewIngest = document.getElementById('view-ingest');
+
+    // Badges & Stats
+    const navRagBadge = document.getElementById('nav-rag-badge');
+    const headerRagBadge = document.getElementById('header-rag-badge');
+    const statTotalVectors = document.getElementById('stat-total-vectors');
+    const statFeaturesCount = document.getElementById('stat-features-count');
+    const statCardsCount = document.getElementById('stat-cards-count');
+    const statTestdataCount = document.getElementById('stat-testdata-count');
+
+    // Forms & Tabs
+    const ingestTabBtns = document.querySelectorAll('.ingest-tab-btn');
+    const formIngestFeature = document.getElementById('form-ingest-feature');
+    const formIngestCard = document.getElementById('form-ingest-card');
+    const formIngestTestdata = document.getElementById('form-ingest-testdata');
+
+    // Semantic Search Tester
+    const testerSearchInput = document.getElementById('tester-search-input');
+    const btnTestSearch = document.getElementById('btn-test-search');
+    const testerSearchResults = document.getElementById('tester-search-results');
+
+    // Explorer Elements
+    const kbFilterInput = document.getElementById('kb-filter-input');
+    const kbCardsContainer = document.getElementById('kb-documents-container');
+    const filterPills = document.querySelectorAll('.filter-pill');
+    const countFilterAll = document.getElementById('count-filter-all');
+    const countFilterFeature = document.getElementById('count-filter-feature');
+    const countFilterCard = document.getElementById('count-filter-card');
+    const countFilterTestdata = document.getElementById('count-filter-testdata');
+
+    // Media Modal Elements
+    const mediaModal = document.getElementById('media-preview-modal');
+    const mediaModalTitle = document.getElementById('media-modal-title');
+    const mediaModalBody = document.getElementById('media-modal-body');
+    const mediaModalClose = document.getElementById('media-modal-close');
+
+    let currentKbFilter = 'all';
+    let cachedDocuments = [];
+
+    // View Switcher Function
+    function switchMainView(viewName) {
+        if (viewName === 'ingest') {
+            if (viewChat) {
+                viewChat.classList.remove('active');
+                viewChat.style.display = 'none';
+            }
+            if (viewIngest) {
+                viewIngest.classList.add('active');
+                viewIngest.style.display = 'flex';
+            }
+            if (navBtnChat) navBtnChat.classList.remove('active');
+            if (navBtnIngest) navBtnIngest.classList.add('active');
+
+            // Refresh RAG stats & load indexed documents
+            refreshRagStats();
+            loadRagDocuments();
+        } else {
+            if (viewIngest) {
+                viewIngest.classList.remove('active');
+                viewIngest.style.display = 'none';
+            }
+            if (viewChat) {
+                viewChat.classList.add('active');
+                viewChat.style.display = 'flex';
+            }
+            if (navBtnIngest) navBtnIngest.classList.remove('active');
+            if (navBtnChat) navBtnChat.classList.add('active');
+        }
+
+        // Close mobile sidebar if open
+        closeSidebar();
+    }
+
+    if (navBtnChat) navBtnChat.addEventListener('click', () => switchMainView('chat'));
+    if (navBtnIngest) navBtnIngest.addEventListener('click', () => switchMainView('ingest'));
+    if (btnOpenIngest) btnOpenIngest.addEventListener('click', () => switchMainView('ingest'));
+    if (btnBackToChat) btnBackToChat.addEventListener('click', () => switchMainView('chat'));
+    if (ingestSidebarToggle) ingestSidebarToggle.addEventListener('click', openSidebar);
+
+    // Toast Notification Utility
+    function showRagToast(message, type = 'success') {
+        const existingToast = document.querySelector('.rag-toast');
+        if (existingToast) existingToast.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `rag-toast toast-${type}`;
+        toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span>${escapeHtml(message)}</span>`;
+        
+        Object.assign(toast.style, {
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            background: type === 'success' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)',
+            color: '#ffffff',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            fontFamily: 'var(--font-heading)',
+            fontSize: '13.5px',
+            fontWeight: '600',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            zIndex: '9999',
+            animation: 'fadeInView 0.25s ease-out'
+        });
+
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3200);
+    }
+
+    // Ingest Tab Switcher
+    ingestTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            ingestTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const tab = btn.getAttribute('data-tab');
+            if (formIngestFeature) formIngestFeature.style.display = tab === 'feature' ? 'flex' : 'none';
+            if (formIngestCard) formIngestCard.style.display = tab === 'card' ? 'flex' : 'none';
+            if (formIngestTestdata) formIngestTestdata.style.display = tab === 'testdata' ? 'flex' : 'none';
+        });
+    });
+
+    // Ingest Feature Form Submit
+    if (formIngestFeature) {
+        formIngestFeature.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-feature');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Vectorizing...';
+            }
+
+            const payload = {
+                feature_name: document.getElementById('feature-name')?.value?.trim() || '',
+                target_platform: document.getElementById('feature-platform')?.value || 'All Platforms',
+                expected_behavior: document.getElementById('feature-expected')?.value?.trim() || '',
+                potential_issues: document.getElementById('feature-issues')?.value?.trim() || '',
+                things_to_observe: document.getElementById('feature-observe')?.value?.trim() || '',
+                image_url: document.getElementById('feature-image')?.value?.trim() || '',
+                video_url: document.getElementById('feature-video')?.value?.trim() || ''
+            };
+
+            try {
+                const baseUrl = getServerUrl();
+                const res = await fetch(`${baseUrl}/api/rag/ingest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entity_type: 'feature', payload })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showRagToast(`Feature "${payload.feature_name}" vectorized & indexed!`);
+                    formIngestFeature.reset();
+                    refreshRagStats();
+                    loadRagDocuments();
+                } else {
+                    showRagToast(data.detail || 'Failed to vectorize feature', 'error');
+                }
+            } catch (err) {
+                console.error('Error ingesting feature:', err);
+                showRagToast('Failed to reach RAG server', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        });
+    }
+
+    // Ingest Card Form Submit
+    if (formIngestCard) {
+        formIngestCard.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-card');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Vectorizing...';
+            }
+
+            const payload = {
+                card_type: document.getElementById('card-type')?.value || 'Prop Gold',
+                card_number: document.getElementById('card-number')?.value?.trim() || '',
+                cid: document.getElementById('card-cid')?.value?.trim() || '',
+                exp: document.getElementById('card-exp')?.value?.trim() || '',
+                amount: document.getElementById('card-amount')?.value?.trim() || '',
+                address: document.getElementById('card-address')?.value?.trim() || '',
+                notes: document.getElementById('card-notes')?.value?.trim() || ''
+            };
+
+            try {
+                const baseUrl = getServerUrl();
+                const res = await fetch(`${baseUrl}/api/rag/ingest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entity_type: 'card', payload })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showRagToast(`Card (${payload.card_type}) vectorized & indexed!`);
+                    formIngestCard.reset();
+                    refreshRagStats();
+                    loadRagDocuments();
+                } else {
+                    showRagToast(data.detail || 'Failed to vectorize card', 'error');
+                }
+            } catch (err) {
+                console.error('Error ingesting card:', err);
+                showRagToast('Failed to reach RAG server', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        });
+    }
+
+    // Ingest Test Data Form Submit
+    if (formIngestTestdata) {
+        formIngestTestdata.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-testdata');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Vectorizing...';
+            }
+
+            const payload = {
+                category: document.getElementById('testdata-category')?.value?.trim() || '',
+                id: document.getElementById('testdata-id')?.value?.trim() || '',
+                zip_code: document.getElementById('testdata-zip')?.value?.trim() || '',
+                name: document.getElementById('testdata-name')?.value?.trim() || '',
+                description: document.getElementById('testdata-desc')?.value?.trim() || ''
+            };
+
+            try {
+                const baseUrl = getServerUrl();
+                const res = await fetch(`${baseUrl}/api/rag/ingest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entity_type: 'test_data', payload })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showRagToast(`Test Data [${payload.category} - Web ID: ${payload.id}] vectorized!`);
+                    formIngestTestdata.reset();
+                    refreshRagStats();
+                    loadRagDocuments();
+                } else {
+                    showRagToast(data.detail || 'Failed to vectorize test data', 'error');
+                }
+            } catch (err) {
+                console.error('Error ingesting test data:', err);
+                showRagToast('Failed to reach RAG server', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        });
+    }
+
+    // Explorer & Multi-Select DOM Elements
+    const breakdownTagsContainer = document.getElementById('breakdown-tags-container');
+    const selectAllVisible = document.getElementById('select-all-visible');
+    const visibleCount = document.getElementById('visible-count');
+    const selectedBadge = document.getElementById('selected-badge');
+    const selectedCount = document.getElementById('selected-count');
+    const btnDeleteSelected = document.getElementById('btn-delete-selected');
+    const btnSelectedNum = document.getElementById('btn-selected-num');
+    const btnDeselectAll = document.getElementById('btn-deselect-all');
+
+    // Delete Confirmation Modal Elements
+    const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+    const deleteConfirmMessage = document.getElementById('delete-confirm-message');
+    const deleteConfirmList = document.getElementById('delete-confirm-list');
+    const deleteConfirmClose = document.getElementById('delete-confirm-close');
+    const deleteConfirmCancel = document.getElementById('delete-confirm-cancel');
+    const deleteConfirmProceed = document.getElementById('delete-confirm-proceed');
+
+    // Selection tracking set (document IDs)
+    const selectedDocIds = new Set();
+    let currentCategoryTagFilter = null;
+
+    // Refresh RAG Stats, Badges & Content Composition Breakdown
+    async function refreshRagStats() {
+        try {
+            const baseUrl = getServerUrl();
+            const res = await fetch(`${baseUrl}/api/rag/stats`);
+            if (!res.ok) return;
+            const data = await res.json();
+
+            if (navRagBadge) navRagBadge.textContent = data.total_vectors;
+            if (headerRagBadge) headerRagBadge.textContent = data.total_vectors;
+            if (statTotalVectors) statTotalVectors.textContent = data.total_vectors;
+            if (statFeaturesCount) statFeaturesCount.textContent = data.features_count ?? data.features ?? 0;
+            if (statCardsCount) statCardsCount.textContent = data.cards_count ?? data.cards ?? 0;
+            if (statTestdataCount) statTestdataCount.textContent = data.test_data_count ?? data.test_data ?? 0;
+
+            if (countFilterAll) countFilterAll.textContent = data.total_vectors;
+            if (countFilterFeature) countFilterFeature.textContent = data.features_count ?? data.features ?? 0;
+            if (countFilterCard) countFilterCard.textContent = data.cards_count ?? data.cards ?? 0;
+            if (countFilterTestdata) countFilterTestdata.textContent = data.test_data_count ?? data.test_data ?? 0;
+
+            // Render "What kind of data is present in the Vector DB"
+            renderContentBreakdown(data);
+        } catch (err) {
+            console.error('Error fetching RAG stats:', err);
+        }
+    }
+
+    function renderContentBreakdown(stats) {
+        if (!breakdownTagsContainer) return;
+        breakdownTagsContainer.innerHTML = '';
+
+        const categories = stats.categories || {};
+        const cardTypes = stats.card_types || {};
+        const platforms = stats.platforms || {};
+
+        // 1. Add "Clear Tag Filter" chip if one is currently active
+        if (currentCategoryTagFilter) {
+            const clearTag = document.createElement('span');
+            clearTag.className = 'breakdown-tag active';
+            clearTag.innerHTML = `<i class="fa-solid fa-filter"></i> Filtering: <strong>${escapeHtml(currentCategoryTagFilter)}</strong> <i class="fa-solid fa-xmark" style="margin-left: 4px;"></i>`;
+            clearTag.title = 'Click to clear this filter';
+            clearTag.addEventListener('click', () => {
+                currentCategoryTagFilter = null;
+                if (kbFilterInput) kbFilterInput.value = '';
+                filterAndRenderDocuments();
+                refreshRagStats();
+            });
+            breakdownTagsContainer.appendChild(clearTag);
+        }
+
+        // 2. Render Category tags (Test Data)
+        Object.entries(categories).forEach(([cat, count]) => {
+            const tag = document.createElement('span');
+            tag.className = `breakdown-tag ${currentCategoryTagFilter === cat ? 'active' : ''}`;
+            tag.innerHTML = `<i class="fa-solid fa-box-archive" style="color: var(--accent-amber);"></i> ${escapeHtml(cat)} <span class="breakdown-tag-count">${count}</span>`;
+            tag.title = `Filter by ${cat} (${count} items)`;
+            tag.addEventListener('click', () => {
+                if (currentCategoryTagFilter === cat) {
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+                } else {
+                    currentCategoryTagFilter = cat;
+                    if (kbFilterInput) kbFilterInput.value = cat;
+                }
+                filterAndRenderDocuments();
+                renderContentBreakdown(stats);
+            });
+            breakdownTagsContainer.appendChild(tag);
+        });
+
+        // 3. Render Card Type tags
+        Object.entries(cardTypes).forEach(([ctype, count]) => {
+            const tag = document.createElement('span');
+            tag.className = `breakdown-tag ${currentCategoryTagFilter === ctype ? 'active' : ''}`;
+            tag.innerHTML = `<i class="fa-solid fa-credit-card" style="color: var(--accent-emerald);"></i> ${escapeHtml(ctype)} <span class="breakdown-tag-count">${count}</span>`;
+            tag.title = `Filter by ${ctype} (${count} cards)`;
+            tag.addEventListener('click', () => {
+                if (currentCategoryTagFilter === ctype) {
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+                } else {
+                    currentCategoryTagFilter = ctype;
+                    if (kbFilterInput) kbFilterInput.value = ctype;
+                }
+                filterAndRenderDocuments();
+                renderContentBreakdown(stats);
+            });
+            breakdownTagsContainer.appendChild(tag);
+        });
+
+        // 4. Render Feature Platform tags
+        Object.entries(platforms).forEach(([plat, count]) => {
+            const tag = document.createElement('span');
+            tag.className = `breakdown-tag ${currentCategoryTagFilter === plat ? 'active' : ''}`;
+            tag.innerHTML = `<i class="fa-solid fa-rocket" style="color: var(--accent-purple);"></i> ${escapeHtml(plat)} <span class="breakdown-tag-count">${count}</span>`;
+            tag.title = `Filter by ${plat} (${count} features)`;
+            tag.addEventListener('click', () => {
+                if (currentCategoryTagFilter === plat) {
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+                } else {
+                    currentCategoryTagFilter = plat;
+                    if (kbFilterInput) kbFilterInput.value = plat;
+                }
+                filterAndRenderDocuments();
+                renderContentBreakdown(stats);
+            });
+            breakdownTagsContainer.appendChild(tag);
+        });
+    }
+
+    // Semantic Search Tester Execution
+    async function executeSemanticTesterSearch() {
+        const query = testerSearchInput ? testerSearchInput.value.trim() : '';
+        if (!query) {
+            if (testerSearchResults) {
+                testerSearchResults.innerHTML = '<span class="tray-placeholder">Please enter a search term above.</span>';
+            }
+            return;
+        }
+
+        if (btnTestSearch) {
+            btnTestSearch.disabled = true;
+            btnTestSearch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching ChromaDB...';
+        }
+
+        try {
+            const baseUrl = getServerUrl();
+            const res = await fetch(`${baseUrl}/api/rag/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, limit: 5 })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.results || data.results.length === 0) {
+                if (testerSearchResults) {
+                    testerSearchResults.innerHTML = '<span class="tray-placeholder">No matching vectors found in ChromaDB. Try searching for "macys card" or "BOPS".</span>';
+                }
+                return;
+            }
+
+            renderTesterSearchResults(data.results);
+        } catch (err) {
+            console.error('Search tester error:', err);
+            if (testerSearchResults) {
+                testerSearchResults.innerHTML = '<span class="tray-placeholder">Failed to execute semantic search. Check server connectivity.</span>';
+            }
+        } finally {
+            if (btnTestSearch) {
+                btnTestSearch.disabled = false;
+                btnTestSearch.innerHTML = '<i class="fa-solid fa-search"></i> Search Vectors';
+            }
+        }
+    }
+
+    function renderTesterSearchResults(results) {
+        if (!testerSearchResults) return;
+        testerSearchResults.innerHTML = '';
+
+        results.forEach(item => {
+            const score = typeof item.score === 'number' ? item.score : 0;
+            const scoreClass = score >= 0.75 ? 'score-high' : (score >= 0.65 ? 'score-mid' : 'score-low');
+            const scorePercent = Math.round(score * 100);
+
+            const div = document.createElement('div');
+            div.className = 'search-result-item';
+
+            const metadata = item.metadata || {};
+            const entityType = item.type || metadata.entity_type || 'unknown';
+            const title = metadata.feature_name || metadata.card_type || metadata.name || metadata.category || item.title || item.id;
+
+            let mediaChips = '';
+            if (metadata.video_url) {
+                mediaChips += `<button class="media-chip media-chip-video" data-video="${escapeHtml(metadata.video_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-play"></i> Watch Video Demo</button>`;
+            }
+            if (metadata.image_url) {
+                mediaChips += `<button class="media-chip media-chip-image" data-image="${escapeHtml(metadata.image_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-image"></i> View Screenshot</button>`;
+            }
+
+            div.innerHTML = `
+                <div class="result-item-header">
+                    <div class="result-item-title">
+                        <span class="kb-type-pill kb-type-${entityType}">${entityType.replace('_', ' ')}</span>
+                        <span>${escapeHtml(title)}</span>
+                    </div>
+                    <span class="score-pill ${scoreClass}"><i class="fa-solid fa-bullseye"></i> ${score.toFixed(3)} (${scorePercent}%)</span>
+                </div>
+                <div class="result-item-body">${escapeHtml(item.chunk_text)}</div>
+                ${mediaChips ? `<div class="kb-media-links">${mediaChips}</div>` : ''}
+            `;
+
+            // Attach media preview listeners
+            div.querySelectorAll('.media-chip-video').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openMediaModal('video', btn.getAttribute('data-video'), btn.getAttribute('data-title'));
+                });
+            });
+            div.querySelectorAll('.media-chip-image').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openMediaModal('image', btn.getAttribute('data-image'), btn.getAttribute('data-title'));
+                });
+            });
+
+            testerSearchResults.appendChild(div);
+        });
+    }
+
+    if (btnTestSearch) btnTestSearch.addEventListener('click', executeSemanticTesterSearch);
+    if (testerSearchInput) {
+        testerSearchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeSemanticTesterSearch();
+            }
+        });
+    }
+
+    // ChromaDB KB Explorer: Load, Filter & Render with Multi-Select
+    async function loadRagDocuments() {
+        if (!kbCardsContainer) return;
+        try {
+            const baseUrl = getServerUrl();
+            const res = await fetch(`${baseUrl}/api/rag/documents`);
+            if (!res.ok) return;
+            const data = await res.json();
+            cachedDocuments = data.documents || [];
+            filterAndRenderDocuments();
+        } catch (err) {
+            console.error('Error loading documents from ChromaDB:', err);
+        }
+    }
+
+    function getCurrentlyFilteredDocs() {
+        const query = kbFilterInput ? kbFilterInput.value.trim().toLowerCase() : '';
+
+        return cachedDocuments.filter(doc => {
+            if (currentKbFilter !== 'all' && doc.type !== currentKbFilter) {
+                return false;
+            }
+            if (!query) return true;
+
+            const textMatch = (doc.chunk_text || '').toLowerCase().includes(query);
+            const titleMatch = (doc.title || '').toLowerCase().includes(query);
+            const idMatch = (doc.id || '').toLowerCase().includes(query);
+            const metaMatch = JSON.stringify(doc.metadata || {}).toLowerCase().includes(query);
+            return textMatch || titleMatch || idMatch || metaMatch;
+        });
+    }
+
+    function filterAndRenderDocuments() {
+        if (!kbCardsContainer) return;
+        const filtered = getCurrentlyFilteredDocs();
+
+        if (visibleCount) {
+            visibleCount.textContent = filtered.length;
+        }
+
+        if (filtered.length === 0) {
+            kbCardsContainer.innerHTML = '<span class="tray-placeholder">No documents matching current filter in ChromaDB.</span>';
+            updateSelectionUI();
+            return;
+        }
+
+        kbCardsContainer.innerHTML = '';
+        filtered.forEach(doc => {
+            const card = createDocumentCard(doc);
+            kbCardsContainer.appendChild(card);
+        });
+
+        updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+        const filtered = getCurrentlyFilteredDocs();
+        const count = selectedDocIds.size;
+
+        if (selectedBadge) {
+            selectedBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+        if (selectedCount) {
+            selectedCount.textContent = count;
+        }
+        if (btnDeleteSelected) {
+            btnDeleteSelected.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+        if (btnSelectedNum) {
+            btnSelectedNum.textContent = count;
+        }
+        if (btnDeselectAll) {
+            btnDeselectAll.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+
+        // Synchronize master checkbox
+        if (selectAllVisible) {
+            if (filtered.length === 0) {
+                selectAllVisible.checked = false;
+                selectAllVisible.indeterminate = false;
+            } else {
+                const visibleSelectedCount = filtered.filter(d => selectedDocIds.has(d.id)).length;
+                if (visibleSelectedCount === 0) {
+                    selectAllVisible.checked = false;
+                    selectAllVisible.indeterminate = false;
+                } else if (visibleSelectedCount === filtered.length) {
+                    selectAllVisible.checked = true;
+                    selectAllVisible.indeterminate = false;
+                } else {
+                    selectAllVisible.checked = false;
+                    selectAllVisible.indeterminate = true;
+                }
+            }
+        }
+    }
+
+    function createDocumentCard(doc) {
+        const card = document.createElement('div');
+        card.className = 'kb-doc-card';
+        card.setAttribute('data-id', doc.id);
+
+        const metadata = doc.metadata || {};
+        const entityType = doc.type || 'unknown';
+        const title = metadata.feature_name || metadata.card_type || metadata.name || metadata.category || doc.title || doc.id;
+        const isChecked = selectedDocIds.has(doc.id);
+
+        // Metadata badges
+        let tagsHtml = '';
+        if (metadata.category) tagsHtml += `<span class="kb-meta-tag">Cat: ${escapeHtml(metadata.category)}</span>`;
+        if (metadata.product_id || metadata.id) tagsHtml += `<span class="kb-meta-tag">Web ID: ${escapeHtml(metadata.product_id || metadata.id)}</span>`;
+        if (metadata.card_type) tagsHtml += `<span class="kb-meta-tag">${escapeHtml(metadata.card_type)}</span>`;
+        if (metadata.zip_code) tagsHtml += `<span class="kb-meta-tag">Zip: ${escapeHtml(metadata.zip_code)}</span>`;
+        if (metadata.target_platform || metadata.platform) tagsHtml += `<span class="kb-meta-tag">${escapeHtml(metadata.target_platform || metadata.platform)}</span>`;
+
+        // Media links
+        let mediaChips = '';
+        if (metadata.video_url) {
+            mediaChips += `<button class="media-chip media-chip-video" data-video="${escapeHtml(metadata.video_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-play"></i> Video Demo</button>`;
+        }
+        if (metadata.image_url) {
+            mediaChips += `<button class="media-chip media-chip-image" data-image="${escapeHtml(metadata.image_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-image"></i> Screenshot</button>`;
+        }
+
+        card.innerHTML = `
+            <div class="kb-card-top">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="doc-card-checkbox">
+                        <input type="checkbox" class="doc-select-checkbox" data-id="${escapeHtml(doc.id)}" ${isChecked ? 'checked' : ''} title="Select item for deletion">
+                    </div>
+                    <span class="kb-type-pill kb-type-${entityType}">${entityType.replace('_', ' ')}</span>
+                </div>
+                <div class="kb-card-actions">
+                    <button class="btn-delete-doc" data-id="${escapeHtml(doc.id)}" title="Delete this single vector from ChromaDB">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="kb-card-title">${escapeHtml(title)}</div>
+            ${tagsHtml ? `<div class="kb-meta-badges">${tagsHtml}</div>` : ''}
+            <div class="kb-chunk-preview">${escapeHtml(doc.chunk_text)}</div>
+            ${mediaChips ? `<div class="kb-media-links">${mediaChips}</div>` : ''}
+        `;
+
+        // Individual item checkbox listener
+        const checkbox = card.querySelector('.doc-select-checkbox');
+        if (checkbox) {
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    selectedDocIds.add(doc.id);
+                } else {
+                    selectedDocIds.delete(doc.id);
+                }
+                updateSelectionUI();
+            });
+        }
+
+        // Single delete button listener
+        const deleteBtn = card.querySelector('.btn-delete-doc');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm(`Delete vector document "${title}" from ChromaDB?`)) return;
+                try {
+                    const baseUrl = getServerUrl();
+                    const res = await fetch(`${baseUrl}/api/rag/documents/${encodeURIComponent(doc.id)}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        showRagToast('Document removed from ChromaDB');
+                        selectedDocIds.delete(doc.id);
+                        refreshRagStats();
+                        loadRagDocuments();
+                    } else {
+                        showRagToast('Failed to delete document', 'error');
+                    }
+                } catch (err) {
+                    console.error('Delete error:', err);
+                    showRagToast('Error contacting server', 'error');
+                }
+            });
+        }
+
+        // Media preview chips listener
+        card.querySelectorAll('.media-chip-video').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openMediaModal('video', btn.getAttribute('data-video'), btn.getAttribute('data-title'));
+            });
+        });
+        card.querySelectorAll('.media-chip-image').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openMediaModal('image', btn.getAttribute('data-image'), btn.getAttribute('data-title'));
+            });
+        });
+
+        return card;
+    }
+
+    // "Select All Visible" master checkbox listener
+    if (selectAllVisible) {
+        selectAllVisible.addEventListener('change', (e) => {
+            const filtered = getCurrentlyFilteredDocs();
+            if (e.target.checked) {
+                filtered.forEach(d => selectedDocIds.add(d.id));
+            } else {
+                filtered.forEach(d => selectedDocIds.delete(d.id));
+            }
+            // Update individual card checkboxes
+            document.querySelectorAll('.doc-select-checkbox').forEach(cb => {
+                const id = cb.getAttribute('data-id');
+                cb.checked = selectedDocIds.has(id);
+            });
+            updateSelectionUI();
+        });
+    }
+
+    // "Clear Selection" button listener
+    if (btnDeselectAll) {
+        btnDeselectAll.addEventListener('click', () => {
+            selectedDocIds.clear();
+            document.querySelectorAll('.doc-select-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateSelectionUI();
+        });
+    }
+
+    // "Delete Selected" batch action listener (Opens Confirmation Modal)
+    if (btnDeleteSelected) {
+        btnDeleteSelected.addEventListener('click', () => {
+            if (selectedDocIds.size === 0) return;
+
+            if (deleteConfirmMessage) {
+                deleteConfirmMessage.innerHTML = `Are you sure you want to delete <strong>${selectedDocIds.size} selected document(s)</strong> from ChromaDB?`;
+            }
+
+            if (deleteConfirmList) {
+                deleteConfirmList.innerHTML = '';
+                const selectedDocs = cachedDocuments.filter(d => selectedDocIds.has(d.id));
+                selectedDocs.forEach(d => {
+                    const row = document.createElement('div');
+                    row.className = 'delete-item-row';
+                    const title = d.title || d.id;
+                    row.innerHTML = `<i class="fa-solid fa-circle-minus"></i> <span>[${d.type.toUpperCase()}] ${escapeHtml(title)}</span>`;
+                    deleteConfirmList.appendChild(row);
+                });
+            }
+
+            if (deleteConfirmModal) {
+                deleteConfirmModal.classList.add('active');
+            }
+        });
+    }
+
+    // Modal Close & Cancel listeners
+    function closeDeleteConfirmModal() {
+        if (deleteConfirmModal) {
+            deleteConfirmModal.classList.remove('active');
+        }
+    }
+
+    if (deleteConfirmClose) deleteConfirmClose.addEventListener('click', closeDeleteConfirmModal);
+    if (deleteConfirmCancel) deleteConfirmCancel.addEventListener('click', closeDeleteConfirmModal);
+    if (deleteConfirmModal) {
+        deleteConfirmModal.addEventListener('click', (e) => {
+            if (e.target === deleteConfirmModal) closeDeleteConfirmModal();
+        });
+    }
+
+    // Modal "Delete from ChromaDB" proceed listener
+    if (deleteConfirmProceed) {
+        deleteConfirmProceed.addEventListener('click', async () => {
+            if (selectedDocIds.size === 0) {
+                closeDeleteConfirmModal();
+                return;
+            }
+
+            const idsToDelete = Array.from(selectedDocIds);
+            const originalHtml = deleteConfirmProceed.innerHTML;
+            deleteConfirmProceed.disabled = true;
+            deleteConfirmProceed.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting from ChromaDB...';
+
+            try {
+                const baseUrl = getServerUrl();
+                const res = await fetch(`${baseUrl}/api/rag/documents/batch-delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: idsToDelete })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showRagToast(`Deleted ${data.deleted_count || idsToDelete.length} documents from ChromaDB`);
+                    selectedDocIds.clear();
+                    closeDeleteConfirmModal();
+                    refreshRagStats();
+                    loadRagDocuments();
+                } else {
+                    showRagToast(data.detail || 'Failed to delete documents', 'error');
+                }
+            } catch (err) {
+                console.error('Batch delete error:', err);
+                showRagToast('Error contacting server', 'error');
+            } finally {
+                deleteConfirmProceed.disabled = false;
+                deleteConfirmProceed.innerHTML = originalHtml;
+            }
+        });
+    }
+
+    // Filter pill listeners
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            filterPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentKbFilter = pill.getAttribute('data-filter') || 'all';
+            filterAndRenderDocuments();
+        });
+    });
+
+    if (kbFilterInput) {
+        kbFilterInput.addEventListener('input', () => {
+            filterAndRenderDocuments();
+        });
+    }
+
+    // Media Modal Functions
+    function openMediaModal(type, url, title) {
+        if (!mediaModal || !mediaModalBody) return;
+        if (mediaModalTitle) mediaModalTitle.innerHTML = `<i class="fa-solid ${type === 'video' ? 'fa-video' : 'fa-image'}"></i> ${escapeHtml(title || 'Media Asset')}`;
+
+        if (type === 'video') {
+            mediaModalBody.innerHTML = `
+                <video class="media-preview-video" controls autoplay>
+                    <source src="${escapeHtml(url)}" type="video/mp4">
+                    Your browser does not support HTML5 video tag.
+                </video>
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Video in New Tab
+                </a>
+            `;
+        } else {
+            mediaModalBody.innerHTML = `
+                <img src="${escapeHtml(url)}" alt="Screenshot Preview" class="media-preview-img" onerror="this.src='logo.png';">
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Image Fullscreen
+                </a>
+            `;
+        }
+
+        mediaModal.classList.add('active');
+    }
+
+    function closeMediaModal() {
+        if (!mediaModal) return;
+        mediaModal.classList.remove('active');
+        if (mediaModalBody) mediaModalBody.innerHTML = '';
+    }
+
+    if (mediaModalClose) mediaModalClose.addEventListener('click', closeMediaModal);
+    if (mediaModal) {
+        mediaModal.addEventListener('click', (e) => {
+            if (e.target === mediaModal) closeMediaModal();
+        });
+    }
+
+    // =========================================================================
     // Initialization: Restore Session on Refresh or Start Fresh
     // =========================================================================
     async function initActiveUserSession() {
@@ -1040,6 +1927,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render sessions list in sidebar
         renderSessionsList();
+
+        // Initial RAG Stats
+        refreshRagStats();
 
         // Background server session synchronization
         syncServerSessions();

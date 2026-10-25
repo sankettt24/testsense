@@ -45,3 +45,4 @@ build/
 # Google ADK local cache
 .adk/
 *.db
+chroma_db/
