@@ -168,8 +168,10 @@ def chunk_card_item(card_data: Dict[str, Any]) -> Dict[str, Any]:
     chunk_text = "\n".join(chunk_lines)
     title = f"{card_type} ({card_number[-4:] if len(card_number) >= 4 else card_number})"
 
+    doc_id = str(card_data.get("doc_id") or card_data.get("id") or "").strip() or str(uuid.uuid4())
+
     return {
-        "id": card_data.get("id") or str(uuid.uuid4()),
+        "id": doc_id,
         "type": "card",
         "title": title,
         "chunk_text": chunk_text,
@@ -216,9 +218,10 @@ def chunk_feature_item(feature_data: Dict[str, Any]) -> Dict[str, Any]:
 
     chunk_text = "\n".join(chunk_lines)
     title = f"Feature: {name} ({platform})"
+    doc_id = str(feature_data.get("doc_id") or feature_data.get("id") or "").strip() or str(uuid.uuid4())
 
     return {
-        "id": feature_data.get("id") or str(uuid.uuid4()),
+        "id": doc_id,
         "type": "feature",
         "title": title,
         "chunk_text": chunk_text,
@@ -265,9 +268,11 @@ def chunk_test_data_item(test_data: Dict[str, Any]) -> Dict[str, Any]:
 
     chunk_text = "\n".join(chunk_lines)
     title = f"{category} Web ID: {product_id}" if product_id else f"{category} Test Data"
+    # Always generate a unique document ID for ChromaDB, preserving product_id in metadata
+    doc_id = str(test_data.get("doc_id", "")).strip() or str(uuid.uuid4())
 
     return {
-        "id": test_data.get("id") or str(uuid.uuid4()),
+        "id": doc_id,
         "type": "test_data",
         "title": title,
         "chunk_text": chunk_text,
@@ -486,7 +491,7 @@ class RAGVectorStore:
 
     def list_documents(self, filter_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Lists all documents from ChromaDB with optional entity type filter."""
-        where = {"entity_type": filter_type} if filter_type else None
+        where = {"entity_type": filter_type} if (filter_type and filter_type.lower() != "all") else None
         res = self.collection.get(where=where, include=["documents", "metadatas"])
         docs = []
         ids = res.get("ids", [])
@@ -502,7 +507,10 @@ class RAGVectorStore:
         """Returns total vector count and breakdown of what kind of data is present in ChromaDB."""
         res = self.collection.get(include=["metadatas"])
         metadatas = res.get("metadatas", [])
-        total = len(metadatas)
+        try:
+            total = self.collection.count()
+        except Exception:
+            total = len(metadatas)
 
         features = 0
         cards = 0
@@ -523,7 +531,7 @@ class RAGVectorStore:
                 card_types[ctype] = card_types.get(ctype, 0) + 1
             elif etype == "test_data":
                 test_data += 1
-                cat = m.get("category") or "GENERAL"
+                cat = str(m.get("category") or "GENERAL").strip().upper()
                 categories[cat] = categories.get(cat, 0) + 1
 
         return {

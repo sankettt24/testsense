@@ -1223,6 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentKbFilter = 'all';
     let cachedDocuments = [];
+    let latestRagStats = null;
 
     // View Switcher Function
     function switchMainView(viewName) {
@@ -1345,8 +1346,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.ok) {
                     showRagToast(`Feature "${payload.feature_name}" vectorized & indexed!`);
                     formIngestFeature.reset();
-                    refreshRagStats();
-                    loadRagDocuments();
+
+                    // Clear search and category tag filter so newly ingested item is visible
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+
+                    // Activate "all" or "feature" filter pill
+                    currentKbFilter = 'all';
+                    filterPills.forEach(p => p.classList.toggle('active', p.getAttribute('data-filter') === 'all'));
+
+                    // Optimistically add document to cachedDocuments
+                    if (data.document) {
+                        cachedDocuments = [data.document, ...cachedDocuments.filter(d => d.id !== data.document.id)];
+                        filterAndRenderDocuments();
+                    }
+
+                    // Await full server synchronization with cache busting
+                    await refreshRagStats();
+                    await loadRagDocuments();
                 } else {
                     showRagToast(data.detail || 'Failed to vectorize feature', 'error');
                 }
@@ -1394,8 +1411,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.ok) {
                     showRagToast(`Card (${payload.card_type}) vectorized & indexed!`);
                     formIngestCard.reset();
-                    refreshRagStats();
-                    loadRagDocuments();
+
+                    // Clear search and category tag filter so newly ingested item is visible
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+
+                    // Activate "all" or "card" filter pill
+                    currentKbFilter = 'all';
+                    filterPills.forEach(p => p.classList.toggle('active', p.getAttribute('data-filter') === 'all'));
+
+                    // Optimistically add document to cachedDocuments
+                    if (data.document) {
+                        cachedDocuments = [data.document, ...cachedDocuments.filter(d => d.id !== data.document.id)];
+                        filterAndRenderDocuments();
+                    }
+
+                    // Await full server synchronization with cache busting
+                    await refreshRagStats();
+                    await loadRagDocuments();
                 } else {
                     showRagToast(data.detail || 'Failed to vectorize card', 'error');
                 }
@@ -1441,8 +1474,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.ok) {
                     showRagToast(`Test Data [${payload.category} - Web ID: ${payload.id}] vectorized!`);
                     formIngestTestdata.reset();
-                    refreshRagStats();
-                    loadRagDocuments();
+
+                    // Clear search and category tag filter so newly ingested item is visible
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+
+                    // Activate "all" or "test_data" filter pill
+                    currentKbFilter = 'all';
+                    filterPills.forEach(p => p.classList.toggle('active', p.getAttribute('data-filter') === 'all'));
+
+                    // Optimistically add document to cachedDocuments
+                    if (data.document) {
+                        cachedDocuments = [data.document, ...cachedDocuments.filter(d => d.id !== data.document.id)];
+                        filterAndRenderDocuments();
+                    }
+
+                    // Await full server synchronization with cache busting
+                    await refreshRagStats();
+                    await loadRagDocuments();
                 } else {
                     showRagToast(data.detail || 'Failed to vectorize test data', 'error');
                 }
@@ -1484,9 +1533,13 @@ document.addEventListener('DOMContentLoaded', () => {
     async function refreshRagStats() {
         try {
             const baseUrl = getServerUrl();
-            const res = await fetch(`${baseUrl}/api/rag/stats`);
+            const res = await fetch(`${baseUrl}/api/rag/stats?_t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            });
             if (!res.ok) return;
             const data = await res.json();
+            latestRagStats = data;
 
             if (navRagBadge) navRagBadge.textContent = data.total_vectors;
             if (headerRagBadge) headerRagBadge.textContent = data.total_vectors;
@@ -1502,12 +1555,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Render "What kind of data is present in the Vector DB"
             renderContentBreakdown(data);
+            return data;
         } catch (err) {
             console.error('Error fetching RAG stats:', err);
         }
     }
 
     function renderContentBreakdown(stats) {
+        stats = stats || latestRagStats || {};
         if (!breakdownTagsContainer) return;
         breakdownTagsContainer.innerHTML = '';
 
@@ -1530,9 +1585,8 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTag.title = 'Click to clear this filter';
             clearTag.addEventListener('click', () => {
                 currentCategoryTagFilter = null;
-                if (kbFilterInput) kbFilterInput.value = '';
                 filterAndRenderDocuments();
-                refreshRagStats();
+                renderContentBreakdown(latestRagStats);
             });
             breakdownTagsContainer.appendChild(clearTag);
         }
@@ -1542,18 +1596,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const tag = document.createElement('span');
             tag.className = `breakdown-tag ${currentCategoryTagFilter === cat ? 'active' : ''}`;
             tag.innerHTML = `<i class="fa-solid fa-box-archive" style="color: var(--accent-amber);"></i> ${escapeHtml(cat)} <span class="breakdown-tag-count">${count}</span>`;
-            tag.title = `Filter by ${cat} (${count} items)`;
+            tag.title = `Filter by category ${cat} (${count} items)`;
             tag.addEventListener('click', () => {
                 if (currentCategoryTagFilter === cat) {
                     currentCategoryTagFilter = null;
-                    if (kbFilterInput) kbFilterInput.value = '';
                 } else {
                     currentCategoryTagFilter = cat;
-                    if (kbFilterInput) kbFilterInput.value = cat;
                     resetTypeFilterToAll();
                 }
                 filterAndRenderDocuments();
-                renderContentBreakdown(stats);
+                renderContentBreakdown(latestRagStats);
             });
             breakdownTagsContainer.appendChild(tag);
         });
@@ -1563,18 +1615,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const tag = document.createElement('span');
             tag.className = `breakdown-tag ${currentCategoryTagFilter === ctype ? 'active' : ''}`;
             tag.innerHTML = `<i class="fa-solid fa-credit-card" style="color: var(--accent-emerald);"></i> ${escapeHtml(ctype)} <span class="breakdown-tag-count">${count}</span>`;
-            tag.title = `Filter by ${ctype} (${count} cards)`;
+            tag.title = `Filter by card type ${ctype} (${count} cards)`;
             tag.addEventListener('click', () => {
                 if (currentCategoryTagFilter === ctype) {
                     currentCategoryTagFilter = null;
-                    if (kbFilterInput) kbFilterInput.value = '';
                 } else {
                     currentCategoryTagFilter = ctype;
-                    if (kbFilterInput) kbFilterInput.value = ctype;
                     resetTypeFilterToAll();
                 }
                 filterAndRenderDocuments();
-                renderContentBreakdown(stats);
+                renderContentBreakdown(latestRagStats);
             });
             breakdownTagsContainer.appendChild(tag);
         });
@@ -1584,18 +1634,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const tag = document.createElement('span');
             tag.className = `breakdown-tag ${currentCategoryTagFilter === plat ? 'active' : ''}`;
             tag.innerHTML = `<i class="fa-solid fa-rocket" style="color: var(--accent-purple);"></i> ${escapeHtml(plat)} <span class="breakdown-tag-count">${count}</span>`;
-            tag.title = `Filter by ${plat} (${count} features)`;
+            tag.title = `Filter by platform ${plat} (${count} features)`;
             tag.addEventListener('click', () => {
                 if (currentCategoryTagFilter === plat) {
                     currentCategoryTagFilter = null;
-                    if (kbFilterInput) kbFilterInput.value = '';
                 } else {
                     currentCategoryTagFilter = plat;
-                    if (kbFilterInput) kbFilterInput.value = plat;
                     resetTypeFilterToAll();
                 }
                 filterAndRenderDocuments();
-                renderContentBreakdown(stats);
+                renderContentBreakdown(latestRagStats);
             });
             breakdownTagsContainer.appendChild(tag);
         });
@@ -1712,11 +1760,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!kbCardsContainer) return;
         try {
             const baseUrl = getServerUrl();
-            const res = await fetch(`${baseUrl}/api/rag/documents`);
+            const res = await fetch(`${baseUrl}/api/rag/documents?_t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            });
             if (!res.ok) return;
             const data = await res.json();
             cachedDocuments = data.documents || [];
             filterAndRenderDocuments();
+            return cachedDocuments;
         } catch (err) {
             console.error('Error loading documents from ChromaDB:', err);
         }
@@ -1726,9 +1778,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = kbFilterInput ? kbFilterInput.value.trim().toLowerCase() : '';
 
         return cachedDocuments.filter(doc => {
+            // 1. Entity type pill filter (all, feature, card, test_data)
             if (currentKbFilter !== 'all' && doc.type !== currentKbFilter) {
                 return false;
             }
+
+            // 2. Specific category/card_type/platform tag breakdown filter
+            if (currentCategoryTagFilter) {
+                const tagLower = currentCategoryTagFilter.trim().toLowerCase();
+                const meta = doc.metadata || {};
+                const cat = String(meta.category || '').trim().toLowerCase();
+                const ctype = String(meta.card_type || '').trim().toLowerCase();
+                const plat = String(meta.platform || meta.target_platform || '').trim().toLowerCase();
+                const title = String(doc.title || '').trim().toLowerCase();
+                const text = String(doc.chunk_text || '').trim().toLowerCase();
+
+                const matchesTag = cat === tagLower || 
+                                   ctype === tagLower || 
+                                   plat === tagLower || 
+                                   title.includes(tagLower) || 
+                                   text.includes(tagLower);
+                if (!matchesTag) return false;
+            }
+
+            // 3. Search query filter
             if (!query) return true;
 
             const textMatch = (doc.chunk_text || '').toLowerCase().includes(query);
@@ -1877,8 +1950,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (res.ok) {
                         showRagToast('Document removed from ChromaDB');
                         selectedDocIds.delete(doc.id);
-                        refreshRagStats();
-                        loadRagDocuments();
+                        cachedDocuments = cachedDocuments.filter(d => d.id !== doc.id);
+                        filterAndRenderDocuments();
+                        await refreshRagStats();
+                        await loadRagDocuments();
                     } else {
                         showRagToast('Failed to delete document', 'error');
                     }
@@ -1998,10 +2073,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
                 if (res.ok) {
                     showRagToast(`Deleted ${data.deleted_count || idsToDelete.length} documents from ChromaDB`);
-                    selectedDocIds.clear();
+                    idsToDelete.forEach(id => selectedDocIds.delete(id));
+                    cachedDocuments = cachedDocuments.filter(d => !idsToDelete.includes(d.id));
                     closeDeleteConfirmModal();
-                    refreshRagStats();
-                    loadRagDocuments();
+                    filterAndRenderDocuments();
+                    await refreshRagStats();
+                    await loadRagDocuments();
                 } else {
                     showRagToast(data.detail || 'Failed to delete documents', 'error');
                 }
@@ -2021,6 +2098,8 @@ document.addEventListener('DOMContentLoaded', () => {
             filterPills.forEach(p => p.classList.remove('active'));
             pill.classList.add('active');
             currentKbFilter = pill.getAttribute('data-filter') || 'all';
+            currentCategoryTagFilter = null;
+            renderContentBreakdown(latestRagStats);
             filterAndRenderDocuments();
         });
     });
