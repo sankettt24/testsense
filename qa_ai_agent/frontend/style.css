@@ -2673,6 +2673,30 @@ textarea::placeholder {
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
+.media-chip-figma {
+    background: rgba(242, 78, 30, 0.15);
+    border: 1px solid rgba(242, 78, 30, 0.35);
+    color: #fb923c;
+}
+
+.media-chip-figma:hover {
+    background: rgba(242, 78, 30, 0.25);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(242, 78, 30, 0.3);
+}
+
+.media-chip-testcase {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+}
+
+.media-chip-testcase:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
 /* ==============================================================================
    MEDIA PREVIEW MODAL
    ============================================================================== */

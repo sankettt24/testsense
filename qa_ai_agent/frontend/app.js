@@ -898,6 +898,22 @@ document.addEventListener('DOMContentLoaded', () => {
                /\b(image|screenshot|visualization|photo|asset|preview)\b/i.test(t);
     }
 
+    function parseUrlList(val) {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(x => String(x).trim()).filter(Boolean);
+        if (typeof val === 'string') {
+            const trimmed = val.trim();
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) return parsed.map(x => String(x).trim()).filter(Boolean);
+                } catch (e) {}
+            }
+            return trimmed.split(/[\n,]+/).map(x => x.trim()).filter(Boolean);
+        }
+        return [];
+    }
+
     function openMediaModal(type, url, title) {
         if (!mediaModal || !mediaModalBody) return;
         if (mediaModalTitle) {
@@ -974,6 +990,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return `<button type="button" class="media-chip media-chip-video chat-media-btn" data-type="video" data-url="${escapeHtml(trimmedUrl)}" data-title="${escapeHtml(trimmedLabel)}"><i class="fa-solid fa-play"></i> ${escapeHtml(trimmedLabel)}</button>`;
             } else if (isImageLink(trimmedUrl, trimmedLabel)) {
                 return `<button type="button" class="media-chip media-chip-image chat-media-btn" data-type="image" data-url="${escapeHtml(trimmedUrl)}" data-title="${escapeHtml(trimmedLabel)}"><i class="fa-solid fa-image"></i> ${escapeHtml(trimmedLabel)}</button>`;
+            } else if (trimmedUrl.includes('figma.com')) {
+                return `<a href="${escapeHtml(trimmedUrl)}" target="_blank" rel="noopener noreferrer" class="media-chip media-chip-figma"><i class="fa-brands fa-figma"></i> ${escapeHtml(trimmedLabel || 'Figma Design')}</a>`;
+            } else if (trimmedLabel.toLowerCase().includes('test case') || trimmedLabel.toLowerCase().includes('testcase') || trimmedUrl.toLowerCase().includes('testcase') || trimmedUrl.toLowerCase().includes('jira') || trimmedUrl.toLowerCase().includes('qtest') || trimmedUrl.toLowerCase().includes('testrail')) {
+                return `<a href="${escapeHtml(trimmedUrl)}" target="_blank" rel="noopener noreferrer" class="media-chip media-chip-testcase"><i class="fa-solid fa-vial-circle-check"></i> ${escapeHtml(trimmedLabel || 'Test Case')}</a>`;
             }
             return `<a href="${escapeHtml(trimmedUrl)}" target="_blank" rel="noopener noreferrer" class="chat-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(trimmedLabel)}</a>`;
         });
@@ -1335,8 +1355,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 expected_behavior: document.getElementById('feature-expected')?.value?.trim() || '',
                 potential_issues: document.getElementById('feature-issues')?.value?.trim() || '',
                 things_to_observe: document.getElementById('feature-observe')?.value?.trim() || '',
-                image_url: document.getElementById('feature-image')?.value?.trim() || '',
-                video_url: document.getElementById('feature-video')?.value?.trim() || ''
+                figma_url: document.getElementById('feature-figma')?.value?.trim() || '',
+                testcase_urls: document.getElementById('feature-testcases')?.value?.trim() || '',
+                image_urls: document.getElementById('feature-images')?.value?.trim() || '',
+                video_urls: document.getElementById('feature-videos')?.value?.trim() || ''
             };
 
             try {
@@ -1714,12 +1736,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = metadata.feature_name || metadata.card_type || metadata.name || metadata.category || item.title || item.id;
 
             let mediaChips = '';
-            if (metadata.video_url) {
-                mediaChips += `<button class="media-chip media-chip-video" data-video="${escapeHtml(metadata.video_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-play"></i> Watch Video Demo</button>`;
+            // Figma Design Link
+            if (metadata.figma_url) {
+                mediaChips += `<a href="${escapeHtml(metadata.figma_url)}" target="_blank" rel="noopener noreferrer" class="media-chip media-chip-figma"><i class="fa-brands fa-figma"></i> Figma Design</a>`;
             }
-            if (metadata.image_url) {
-                mediaChips += `<button class="media-chip media-chip-image" data-image="${escapeHtml(metadata.image_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-image"></i> View Screenshot</button>`;
-            }
+            // Test Case URLs
+            const testcases = parseUrlList(metadata.testcase_urls || metadata.testcases || metadata.testcase_url);
+            testcases.forEach((tc, idx) => {
+                const label = testcases.length === 1 ? 'Test Case' : `Test Case #${idx + 1}`;
+                mediaChips += `<a href="${escapeHtml(tc)}" target="_blank" rel="noopener noreferrer" class="media-chip media-chip-testcase"><i class="fa-solid fa-vial-circle-check"></i> ${escapeHtml(label)}</a>`;
+            });
+            // Video demos
+            const videos = parseUrlList(metadata.video_urls || metadata.videos || metadata.video_url);
+            videos.forEach((vid, idx) => {
+                const label = videos.length === 1 ? 'Watch Video Demo' : `Video Demo #${idx + 1}`;
+                mediaChips += `<button class="media-chip media-chip-video" data-video="${escapeHtml(vid)}" data-title="${escapeHtml(title)} (${label})"><i class="fa-solid fa-play"></i> ${escapeHtml(label)}</button>`;
+            });
+            // Screenshot Asset Links
+            const images = parseUrlList(metadata.image_urls || metadata.images || metadata.image_url);
+            images.forEach((img, idx) => {
+                const label = images.length === 1 ? 'View Screenshot' : `Screenshot #${idx + 1}`;
+                mediaChips += `<button class="media-chip media-chip-image" data-image="${escapeHtml(img)}" data-title="${escapeHtml(title)} (${label})"><i class="fa-solid fa-image"></i> ${escapeHtml(label)}</button>`;
+            });
 
             div.innerHTML = `
                 <div class="result-item-header">
@@ -1898,14 +1936,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.zip_code) tagsHtml += `<span class="kb-meta-tag">Zip: ${escapeHtml(metadata.zip_code)}</span>`;
         if (metadata.target_platform || metadata.platform) tagsHtml += `<span class="kb-meta-tag">${escapeHtml(metadata.target_platform || metadata.platform)}</span>`;
 
-        // Media links
+        // Media links & External specifications
         let mediaChips = '';
-        if (metadata.video_url) {
-            mediaChips += `<button class="media-chip media-chip-video" data-video="${escapeHtml(metadata.video_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-play"></i> Video Demo</button>`;
+        if (metadata.figma_url) {
+            mediaChips += `<a href="${escapeHtml(metadata.figma_url)}" target="_blank" rel="noopener noreferrer" class="media-chip media-chip-figma"><i class="fa-brands fa-figma"></i> Figma Design</a>`;
         }
-        if (metadata.image_url) {
-            mediaChips += `<button class="media-chip media-chip-image" data-image="${escapeHtml(metadata.image_url)}" data-title="${escapeHtml(title)}"><i class="fa-solid fa-image"></i> Screenshot</button>`;
-        }
+        const testcases = parseUrlList(metadata.testcase_urls || metadata.testcases || metadata.testcase_url);
+        testcases.forEach((tc, idx) => {
+            const label = testcases.length === 1 ? 'Test Case' : `Test Case #${idx + 1}`;
+            mediaChips += `<a href="${escapeHtml(tc)}" target="_blank" rel="noopener noreferrer" class="media-chip media-chip-testcase"><i class="fa-solid fa-vial-circle-check"></i> ${escapeHtml(label)}</a>`;
+        });
+        const videos = parseUrlList(metadata.video_urls || metadata.videos || metadata.video_url);
+        videos.forEach((vid, idx) => {
+            const label = videos.length === 1 ? 'Video Demo' : `Video #${idx + 1}`;
+            mediaChips += `<button class="media-chip media-chip-video" data-video="${escapeHtml(vid)}" data-title="${escapeHtml(title)} (${label})"><i class="fa-solid fa-play"></i> ${escapeHtml(label)}</button>`;
+        });
+        const images = parseUrlList(metadata.image_urls || metadata.images || metadata.image_url);
+        images.forEach((img, idx) => {
+            const label = images.length === 1 ? 'Screenshot' : `Screenshot #${idx + 1}`;
+            mediaChips += `<button class="media-chip media-chip-image" data-image="${escapeHtml(img)}" data-title="${escapeHtml(title)} (${label})"><i class="fa-solid fa-image"></i> ${escapeHtml(label)}</button>`;
+        });
 
         card.innerHTML = `
             <div class="kb-card-top">

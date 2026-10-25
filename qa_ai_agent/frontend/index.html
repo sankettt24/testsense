@@ -364,7 +364,7 @@
                         <form id="form-ingest-feature" class="ingest-form active">
                             <div class="form-banner feature-banner">
                                 <i class="fa-solid fa-circle-info"></i>
-                                <span><strong>Feature Chunking Rule:</strong> Embeds Expected Behavior, Watchout Issues, Acceptance Criteria, and direct links for Screenshots and Video Walkthroughs.</span>
+                                <span><strong>Feature Chunking Rule:</strong> Embeds Expected Behavior, Watchout Issues, Acceptance Criteria, Figma design specs, Test Case links, and multiple Screenshots & Video Walkthroughs.</span>
                             </div>
                             <div class="form-row">
                                 <div class="input-group">
@@ -400,12 +400,22 @@
                             </div>
                             <div class="form-row">
                                 <div class="input-group">
-                                    <label for="feature-image"><i class="fa-solid fa-image"></i> Image / Screenshot Asset Link</label>
-                                    <input type="url" id="feature-image" placeholder="https://images.unsplash.com/... or screenshot URL">
+                                    <label for="feature-figma"><i class="fa-brands fa-figma" style="color: #f24e1e;"></i> Figma Design / Spec Link</label>
+                                    <input type="url" id="feature-figma" placeholder="https://www.figma.com/design/... or file link">
                                 </div>
                                 <div class="input-group">
-                                    <label for="feature-video"><i class="fa-solid fa-video"></i> Video Demo / Recording Link</label>
-                                    <input type="url" id="feature-video" placeholder="https://example.com/videos/demo.mp4">
+                                    <label for="feature-testcases"><i class="fa-solid fa-vial-circle-check" style="color: var(--accent-emerald);"></i> Test Case URLs (Multiple)</label>
+                                    <textarea id="feature-testcases" rows="2" placeholder="One per line or comma-separated e.g. https://jira.company.com/browse/TC-101"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="feature-images"><i class="fa-solid fa-images" style="color: var(--accent-blue);"></i> Screenshot Asset Links (Multiple)</label>
+                                    <textarea id="feature-images" rows="2" placeholder="One per line or comma-separated e.g. https://images.unsplash.com/..."></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label for="feature-videos"><i class="fa-solid fa-video" style="color: var(--accent-purple);"></i> Video Demo Links (Multiple)</label>
+                                    <textarea id="feature-videos" rows="2" placeholder="One per line or comma-separated e.g. https://example.com/videos/demo.mp4"></textarea>
                                 </div>
                             </div>
                             <div class="form-actions">

@@ -840,6 +840,10 @@ def query_feature_knowledge(feature_query: str) -> dict:
                 "expected_behavior": meta.get("expected"),
                 "potential_issues": meta.get("issues"),
                 "things_to_observe": meta.get("observe"),
+                "figma_url": meta.get("figma_url"),
+                "testcase_urls": meta.get("testcase_urls") or [],
+                "image_urls": meta.get("image_urls") or ([meta.get("image_url")] if meta.get("image_url") else []),
+                "video_urls": meta.get("video_urls") or ([meta.get("video_url")] if meta.get("video_url") else []),
                 "image_url": meta.get("image_url"),
                 "video_url": meta.get("video_url"),
                 "similarity_score": m.get("score")
@@ -909,8 +913,8 @@ root_agent = Agent(
         "11. `fetch_qa_test_data` (RAG Vector Knowledge Base Lookup):\n"
         "   - `category` (REQUIRED): Query or category for test data, Web IDs, credit cards, sandbox cards, gift cards, or address info.\n"
         "   - Uses semantic vector retrieval from the RAG knowledge base.\n\n"
-        "12. `query_feature_knowledge` (RAG Feature Intelligence & Video/Image Links):\n"
-        "   - `feature_query` (REQUIRED): Natural language question or feature name to inspect expected behavior, edge case issues, things to observe/AC, and image/video walkthrough links.\n\n"
+        "12. `query_feature_knowledge` (RAG Feature Intelligence, Figma Specs, Test Cases & Media):\n"
+        "   - `feature_query` (REQUIRED): Natural language question or feature name to inspect expected behavior, edge case issues, things to observe/AC, Figma design links, Test Case URLs, and video/screenshot walkthrough links. When found, provide the Figma links, Test Case URLs, and video/screenshot links clearly formatted in markdown.\n\n"
         "Always communicate clearly what parameters you parsed and executed in your final response."
     ),
     tools=[

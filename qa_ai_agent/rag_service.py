@@ -187,18 +187,49 @@ def chunk_card_item(card_data: Dict[str, Any]) -> Dict[str, Any]:
         "created_at": card_data.get("created_at") or time.time()
     }
 
+def _parse_url_list(value: Any) -> List[str]:
+    """Helper to parse a string or list of URLs into a list of clean strings."""
+    if not value:
+        return []
+    if isinstance(value, list):
+        urls = []
+        for item in value:
+            if isinstance(item, str):
+                for u in item.replace(",", "\n").split("\n"):
+                    u_clean = u.strip()
+                    if u_clean:
+                        urls.append(u_clean)
+        return urls
+    return [u.strip() for u in str(value).replace(",", "\n").split("\n") if u.strip()]
+
 def chunk_feature_item(feature_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Specialized chunking for new QA features.
-    Embeds requirements, potential issues, things to observe, and video/image asset links.
+    Embeds requirements, potential issues, things to observe, Figma specs, Test Cases,
+    and multiple video/screenshot asset links.
     """
     name = str(feature_data.get("name", feature_data.get("feature_name", ""))).strip()
     platform = str(feature_data.get("platform", feature_data.get("target_platform", "All Platforms"))).strip()
     expected = str(feature_data.get("expected", feature_data.get("expected_behavior", ""))).strip()
     issues = str(feature_data.get("issues", feature_data.get("potential_issues", ""))).strip()
     observe = str(feature_data.get("observe", feature_data.get("things_to_observe", ""))).strip()
-    image_url = str(feature_data.get("image_url", "")).strip()
-    video_url = str(feature_data.get("video_url", "")).strip()
+    figma_url = str(feature_data.get("figma_url", feature_data.get("figma", ""))).strip()
+
+    # Parse multiple test case URLs
+    raw_testcases = feature_data.get("testcase_urls") or feature_data.get("testcases") or feature_data.get("testcase_url") or ""
+    testcase_urls = _parse_url_list(raw_testcases)
+
+    # Parse multiple image/screenshot URLs
+    raw_images = feature_data.get("image_urls") or feature_data.get("images") or feature_data.get("image_url") or ""
+    image_urls = _parse_url_list(raw_images)
+
+    # Parse multiple video URLs
+    raw_videos = feature_data.get("video_urls") or feature_data.get("videos") or feature_data.get("video_url") or ""
+    video_urls = _parse_url_list(raw_videos)
+
+    # Scalar backward compatibility
+    primary_image = image_urls[0] if image_urls else ""
+    primary_video = video_urls[0] if video_urls else ""
 
     chunk_lines = [
         f"[ENTITY: QA FEATURE INTELLIGENCE]",
@@ -210,11 +241,15 @@ def chunk_feature_item(feature_data: Dict[str, Any]) -> Dict[str, Any]:
         chunk_lines.append(f"Potential Issues & Edge Cases Faced:\n{issues}")
     if observe:
         chunk_lines.append(f"Things to Observe & Acceptance Criteria:\n{observe}")
-    if image_url:
-        chunk_lines.append(f"Image / Screenshot Link: {image_url}")
-    if video_url:
-        chunk_lines.append(f"Video Demo / Walkthrough Link: {video_url}")
-    chunk_lines.append(f"Keywords: {name} feature acceptance criteria test scenario edge cases observation {platform}")
+    if figma_url:
+        chunk_lines.append(f"Figma Design / Specification Link: {figma_url}")
+    if testcase_urls:
+        chunk_lines.append("Test Case URLs:\n" + "\n".join(f"- {u}" for u in testcase_urls))
+    if image_urls:
+        chunk_lines.append("Screenshot & Image Asset Links:\n" + "\n".join(f"- {u}" for u in image_urls))
+    if video_urls:
+        chunk_lines.append("Video Demo & Recording Links:\n" + "\n".join(f"- {u}" for u in video_urls))
+    chunk_lines.append(f"Keywords: {name} feature acceptance criteria test scenario edge cases observation {platform} figma testcases")
 
     chunk_text = "\n".join(chunk_lines)
     title = f"Feature: {name} ({platform})"
@@ -236,8 +271,12 @@ def chunk_feature_item(feature_data: Dict[str, Any]) -> Dict[str, Any]:
             "potential_issues": issues,
             "observe": observe,
             "things_to_observe": observe,
-            "image_url": image_url,
-            "video_url": video_url
+            "figma_url": figma_url,
+            "testcase_urls": testcase_urls,
+            "image_urls": image_urls,
+            "video_urls": video_urls,
+            "image_url": primary_image,
+            "video_url": primary_video
         },
         "created_at": feature_data.get("created_at") or time.time()
     }
