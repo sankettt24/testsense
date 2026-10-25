@@ -138,236 +138,260 @@ The agent incorporates multi-layered security guardrails directly into `agent.py
 
 ```
 qa_ai_agent/
+├── chroma_db/            # Persistent ChromaDB vector store (SQLite + HNSW cosine index)
 ├── multi_tool_agent/
-│   ├── .env                  # Google Gemini API key and environment secrets
-│   └── agent.py              # ADK Agent definition, tool functions, security layer, and parameter validation
-├── chroma_db/                # Persistent ChromaDB vector database index and SQLite store (gitignored)
-├── frontend/                 # Web UI assets
-│   ├── index.html            # Single Page Application (Chat + ChromaDB Vector Dashboard)
-│   ├── style.css             # Vanilla CSS design system with glassmorphism & dark aesthetics
-│   ├── app.js                # Frontend client logic, session synchronization, RAG explorer & media modal
-│   └── logo.png              # Platform logo
-├── rag_service.py            # ChromaDB RAG Manager, specialized chunkers, embedding engine & hybrid search
-├── rag_vector_store.json     # Seed knowledge base catalog for cold-start database migration
-├── sessions_store.json       # Persistent server-side session and event store
-├── server.py                 # FastAPI REST API wrapper serving ADK agent, sessions & RAG endpoints
-├── vercel.json               # Vercel serverless configuration
-├── render.yaml               # Render web service configuration
-├── requirements.txt          # Python package dependencies (google-adk, chromadb, fastapi, uvicorn, etc.)
-└── README.md                 # Complete project architecture, setup, and technical documentation
+│   ├── .env              # Environment secrets (GOOGLE_API_KEY)
+│   └── agent.py          # ADK Agent definition, tool functions, security layer, and parameter validation
+├── frontend/             # Dark-mode glassmorphic QA Web UI
+│   ├── index.html        # Unified Chat & ChromaDB Vector Ingestion Dashboard
+│   ├── style.css         # Modern styling, interactive media chips, and modal dialogs
+│   ├── app.js            # Frontend logic, multi-session management, and ChromaDB explorer
+│   └── logo.png          # TestSense AI application logo
+├── rag_service.py        # ChromaDB vector store, specialized chunking, embeddings & hybrid search
+├── rag_vector_store.json # Initial cold-start seed dataset (cards, Web IDs, and feature specs)
+├── sessions_store.json   # Server-backed persistent JSON session database
+├── server.py             # FastAPI REST API wrapper for cloud deployment (Render, Vercel, Cloud Run)
+├── vercel.json           # Vercel serverless configuration
+├── render.yaml           # Render web service configuration
+├── Dockerfile            # Container configuration for Cloud Run / Docker deployments
+├── requirements.txt      # Python dependencies (google-adk, chromadb, fastapi, uvicorn, etc.)
+└── README.md             # Complete project setup and architecture documentation
 ```
+
+---
+
+## 🧠 ChromaDB RAG Vector Store & Feature Ingestion Architecture
+
+The platform integrates a persistent **Retrieval-Augmented Generation (RAG)** architecture using **ChromaDB** to supply the AI Agent with up-to-date QA payment cards, Web IDs, test data, and feature intelligence without requiring model fine-tuning or code redeployments.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                       DATA INGESTION PIPELINE (RAG)                            │
+└────────────────────────────────────────────────────────────────────────────────┘
+       │                                 │                                 │
+       ▼                                 ▼                                 ▼
+ ┌───────────┐                     ┌───────────┐                     ┌───────────┐
+ │ QA Cards  │                     │  Web IDs  │                     │  Feature  │
+ │  & CVVs   │                     │ & TestData│                     │   Specs   │
+ └─────┬─────┘                     └─────┬─────┘                     └─────┬─────┘
+       │                                 │                                 │
+       ▼                                 ▼                                 ▼
+ ┌───────────────────────────────────────────────────────────────────────────────┐
+ │               Specialized Chunking Engine (rag_service.py)                    │
+ │   • Cards: chunk_card_item()     • Test Data: chunk_test_data_item()          │
+ │   • Features: chunk_feature_item() (with Video & Screenshot URLs)             │
+ └───────────────────────────────────────┬───────────────────────────────────────┘
+                                         │
+                                         ▼
+ ┌───────────────────────────────────────────────────────────────────────────────┐
+ │                    Embedding Vectorization Engine                             │
+ │   • Model: Google GenAI gemini-embedding-001 (or 256-dim token fallback)     │
+ │   • Output: 768 Dimensions (L2-Normalized for Cosine Stability)               │
+ └───────────────────────────────────────┬───────────────────────────────────────┘
+                                         │
+                                         ▼
+ ┌───────────────────────────────────────────────────────────────────────────────┐
+ │                   ChromaDB Persistent Vector Store                            │
+ │   • Storage Path: ./chroma_db (SQLite + HNSW Index)                           │
+ │   • Collection: qa_knowledge_base | Metric: hnsw:space = cosine               │
+ │   • Metadata: Flattened primitives + _full_meta_json (Lossless Roundtrip)     │
+ └───────────────────────────────────────┬───────────────────────────────────────┘
+                                         │
+                                         ▼
+ ┌───────────────────────────────────────────────────────────────────────────────┐
+ │                     Hybrid Vector Search & Retrieval                          │
+ │   • ChromaDB Cosine Distance Query + Exact Keyword / ID Overlap Boosting      │
+ │   • Consumed by: fetch_qa_test_data & query_feature_knowledge Agent Tools     │
+ └───────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 1. Vector Database & Storage Engine
+* **Technology**: **ChromaDB** initialized via `chromadb.PersistentClient(path="./chroma_db")`.
+* **Collection Name**: `qa_knowledge_base`.
+* **Distance Metric**: **Cosine Distance** (`metadata={"hnsw:space": "cosine"}`).
+* **Cold-Start Auto-Migration**: If the vector store is empty on startup, it automatically loads and vectorizes the 43 initial seed records from `rag_vector_store.json` (19 cards, 21 test data items, 3 rich feature specifications).
+
+### 2. Embedding Model & Vector Dimensions
+* **Primary Embedding Model**: **Google GenAI `gemini-embedding-001`** accessed via the official `google.genai` SDK.
+* **Vector Dimensions**: **768 Dimensions**. Every generated vector is $L_2$-normalized ($\|v\|_2 = 1.0$) to guarantee stability under cosine distance operations.
+* **Fallback / Offline Vectorizer**: Deterministic token n-gram dense vectorizer generating normalized **256 Dimensions**. This ensures the agent functions reliably offline or in corporate proxy networks without HuggingFace SSL certificate blockages.
+* **Custom Embedding Function**: Built as `GeminiChromaEmbeddingFunction(EmbeddingFunction)` in `rag_service.py`. This completely bypasses Chroma's default `ONNXMiniLM_L6_V2` model download, resolving corporate SSL proxy intercept issues.
+
+### 3. Knowledge Base Structure (Entity Types)
+The RAG database categorizes documents into three distinct entity types:
+
+| Entity Type | Identifier | Schema & Attributes | Example Data |
+|---|---|---|---|
+| **Payment & Test Cards** | `card` | `card_type`, `card_number`, `cid`, `exp`, `amount`, `address`, `notes` | Prop Gold, Prop Platinum, Macy's Amex BT, Gift Cards ($20–$300), Sandbox Cards |
+| **QA Test Data & Web IDs** | `test_data` | `category`, `product_id` (Web ID), `product_name`, `zip_code`, `description` | BOPS (86800), BOSS (8790118), SHIP (13638432), GWP (1494), Chanel Luxury PDP |
+| **Feature Specifications** | `feature` | `name`, `platform`, `expected`, `issues` (edge cases), `observe` (AC), `image_url`, `video_url` | BOPS Store Fulfillment, Star Money Rewards, M/B-Money Customer Funding |
+
+### 4. Specialized Chunking & Ingestion Pipeline
+Raw inputs are transformed through specialized chunking functions before vectorization:
+
+1. **Card Chunking (`chunk_card_item`)**:
+   - Isolates sensitive payment fields, structures CVV, expiration date, and billing address.
+   - Appends contextual search keywords (e.g. `Prop Gold card number payment test card sandbox credit debit prop 6035340000050209`).
+2. **Feature Chunking (`chunk_feature_item`)**:
+   - Generates structured sections for `Feature Name`, `Platform Target`, `Expected Behavior & Business Requirements`, `Potential Edge Cases & Failure Modes`, and `Things to Observe (Acceptance Criteria)`.
+   - Embeds direct links for video walkthroughs (`.mp4`, YouTube) and screenshot images (`.jpg`, `.png`).
+3. **Test Data Chunking (`chunk_test_data_item`)**:
+   - Formats order category (`BOPS`, `BOSS`, `SHIP`, `GWP`), Web ID, product name, and zip code.
+4. **Metadata Flattening & Lossless Roundtrip**:
+   - ChromaDB strictly enforces primitive types (`str`, `int`, `float`, `bool`) in its metadata dictionaries.
+   - `to_chroma_metadata()` extracts flat fields for ChromaDB indexing and serializes the complete nested dictionary into `_full_meta_json`.
+   - `from_chroma_doc()` deserializes `_full_meta_json` on retrieval, ensuring 100% data fidelity with zero attribute loss.
+
+### 5. Hybrid Retrieval & Search Scoring
+When an agent or user queries the RAG store:
+1. An embedding vector is computed for the query string.
+2. ChromaDB queries top candidates using cosine distance ($d \in [0, 2]$).
+3. Cosine similarity is computed as $S_{\text{semantic}} = \max(0.0, 1.0 - d)$.
+4. **Keyword & Identifier Boosting**:
+   - **Exact Card / Web ID Match**: $+0.40$ boost if the exact number or ID is present.
+   - **Exact Category / Platform Match**: $+0.25$ boost if category (e.g., `BOPS`, `Prop Gold`) matches.
+   - **Keyword Hits**: Scaled up to $+0.35$ based on token overlap.
+5. Total score: $S_{\text{total}} = \min(1.0, 0.65 \times S_{\text{semantic}} + S_{\text{keyword}} + S_{\text{id\_boost}})$.
+
+### 6. Dashboard Data Breakdown & Selective Deletion
+The interactive **RAG Knowledge Dashboard** at `/app` provides complete transparency and granular control:
+* **"What's in ChromaDB?" Breakdown Tags**:
+  - Displays dynamic item counts across **Categories** (`BOPS`, `BOSS`, `SHIP`, `GWP`, `3P`, `BT`, `LTL`, etc.), **Card Types** (`Prop Gold`, `Platinum`, `Amex`, `Gift Cards`), and **Platforms** (`MCOM`, `BCOM`).
+  - **Click-to-Filter**: Clicking any tag instantly filters the documents explorer to inspect only matching items.
+* **Selective Deletion (No "Delete All" Accidents)**:
+  - Each vectorized card has an individual selection checkbox.
+  - A floating selection toolbar displays `X Selected`, `Select All Visible`, `Deselect All`, and a danger-glow `Delete Selected` button.
+  - Clicking `Delete Selected` opens a confirmation modal displaying the exact titles to be deleted before calling `POST /api/rag/documents/batch-delete`.
+  - Individual items can also be deleted directly via `DELETE /api/rag/documents/{id}`.
+* **Interactive Media Previews in Chat & Dashboard**:
+  - Video walkthroughs and screenshot links render as interactive chips (`▶ Video Demo`, `🖼 Screenshot`).
+  - Clicking any chip opens a high-definition preview modal with an embedded video player and screenshot viewer.
+
+---
+
+## 💾 Session Management & Multi-Chat Persistence Architecture
+
+The agent features persistent session management allowing QA testers to refresh the browser, navigate between different testing sessions, or resume conversations without losing context.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                       SESSION SYNCHRONIZATION FLOW                             │
+└────────────────────────────────────────────────────────────────────────────────┘
+                                  
+     Browser Client (UI)                                  Backend Server (FastAPI)
+ ┌───────────────────────────┐                         ┌───────────────────────────┐
+ │ • localStorage Cache      │                         │ • SESSIONS_DB (In-Memory) │
+ │ • Active Session Tracker  │                         │ • sessions_store.json     │
+ │ • Chat History Sidebar    │                         │   (Disk Persistence)      │
+ └─────────────┬─────────────┘                         └─────────────┬─────────────┘
+               │                                                     │
+               │ 1. POST /apps/{app}/users/{user}/sessions           │
+               ├────────────────────────────────────────────────────►│
+               │    (Create or register session)                     │
+               │                                                     │
+               │ 2. POST /run { sessionId, newMessage }              │
+               ├────────────────────────────────────────────────────►│
+               │    (Appends User Event & AI Tool Responses)         │
+               │                                                     │
+               │ 3. Save sessions_store.json                         │
+               │◄────────────────────────────────────────────────────┤
+               │    (Returns ADK events & updates disk)              │
+               │                                                     │
+               │ 4. Page Refresh / Switch Session                    │
+               │    (Replays messages, tool calls, and media chips)  │
+               ▼                                                     ▼
+```
+
+### 1. Dual-Layer Storage Mechanism
+* **Server-Side Persistent Store (`sessions_store.json`)**:
+  - Every message, tool call (e.g. `fetch_qa_test_data`, `mock_bops_order`), tool response, and final model text response is recorded as an event object with timestamps and invocation IDs.
+  - Automatically flushed to disk after every user turn to prevent data loss across server restarts.
+* **Client-Side Cache (`localStorage`)**:
+  - Caches session metadata (`id`, `title`, `updatedAt`, `messages`) under key `adk_sessions_cache_${userId}`.
+  - Tracks the currently open conversation under `adk_active_session_id_${userId}`.
+  - Automatically reconciles with the server on startup via `GET /apps/{appName}/users/{userId}/sessions`.
+
+### 2. Key Capabilities
+* **Refresh Resilience**: Refreshing the browser (`Cmd + Shift + R`) preserves the open conversation, chat bubbles, and interactive media chips.
+* **Smart Auto-Titling**: New chats are dynamically renamed from the default *"New Chat"* to a 35-character summary of the user's first prompt (e.g. *"What is the card number for Prop Gold..."*).
+* **Multi-Chat Switching**: Users can create new chats (**+ New Chat**), switch between old sessions in the sidebar history, or delete specific chat sessions.
+* **Multi-User Isolation**: Sessions are namespaced by `userId` (e.g. `qa_tester_1`), allowing different testers or automated test runners to maintain isolated conversation histories.
 
 ---
 
 ## ⚙️ Available Agent Tools & Parameters
 
-The agent automatically validates input parameters before triggering any tool or API endpoint.
+The agent automatically validates input parameters before triggering any tool, API endpoint, or vector query.
 
-| Tool Name | Endpoint / Function | Required Parameters | Optional Parameters & Defaults | Description |
+| Tool Name | Type / Endpoint | Required Parameters | Optional Parameters & Defaults | Description |
 |---|---|---|---|---|
-| `add_m_money` | `POST /loyaltyautomation/mbmoneycard/add` | `email` | `amount="30"`, `environment="mcom-131"`, `no_of_cards="4"` | Adds M-Money (Macy's Money) or B-Money (Bloomingdale's Money) gift cards to user profile |
-| `setup_star_money` | `POST /loyaltyautomation/loyalty/setup` | `card_number` | `reward_money="10"` | Adds Star Money rewards to Macy's loyalty card (MCOM channel only) |
-| `get_supc_details` | `GET /promotions/supc/416870` | None | `environment="mcom-170"` | Fetches promotion details for SUPC offer code |
-| `get_pzo_details` | `GET /promotions/supc/19932757` | None | `environment="mcom-170"` | Fetches promotion details for PZO offer code |
-| `get_shipment_ref` | `GET /orderdetails` | `customer_order_id` | None | Extracts `reservationId` and shipment reference from order wrapper response |
-| `mock_sth_order` | `POST /ordermods` | `customer_order_id` | None | Mocks Standard Ship To Home (STH) order fulfillment payload |
-| `mock_bops_order` | `POST /ordermods` | `customer_order_id` | None | Mocks Buy Online Pickup In Store (BOPS) order fulfillment payload |
-| `mock_boss_order` | `POST /ordermods` | `customer_order_id` | None | Mocks Buy Online Ship To Store (BOSS) order fulfillment payload |
-| `mock_sdd_order` | `POST /ordermods` | `customer_order_id` | None | Mocks Same Day Delivery (SDD) order fulfillment payload |
-| `send_shpshpd_fulfillment` | Status Router | `customer_order_id` | `order_type="BOPS"` | Routes SHPSHPD status update event for specified order type |
-| `fetch_qa_test_data` | ChromaDB RAG Vector Store | `category` | None | Semantic vector lookup for Web IDs, Test Cards, Gift Cards, and Addresses |
-| `query_feature_knowledge` | ChromaDB RAG Vector Store | `feature_query` | None | Retrieves feature specifications, acceptance criteria, known edge cases, and media demo links |
+| `fetch_qa_test_data` | **ChromaDB RAG** | `category` | None | Semantic vector retrieval for Web IDs, Prop cards, Sandbox cards, and Gift cards from ChromaDB |
+| `query_feature_knowledge` | **ChromaDB RAG** | `feature_query` | None | Retrieves feature specifications, expected behaviors, edge-case risks, ACs, and video/image walkthrough links |
+| `add_m_money` | Postman API (`POST /mbmoneycard/add`) | `email` | `amount="30"`, `environment="mcom-131"`, `no_of_cards="4"` | Funds user accounts with M-Money (Macy's) or B-Money (Bloomingdale's) gift cards |
+| `setup_star_money` | Postman API (`POST /loyalty/setup`) | `card_number` | `reward_money="10"` | Loads reward dollars onto Macy's loyalty cards (MCOM only) |
+| `get_supc_details` | Postman API (`GET /promotions/supc/...`) | None | `environment="mcom-170"` | Fetches SUPC promotion code details |
+| `get_pzo_details` | Postman API (`GET /promotions/supc/...`) | None | `environment="mcom-170"` | Fetches PZO promotion code details |
+| `get_shipment_ref` | Postman API (`GET /orders/{id}`) | `customer_order_id` | None | Extracts `reservationId` from order details response wrapper |
+| `mock_sth_order` | Order Mocking | `customer_order_id` | None | Mocks Ship To Home (STH) order payload and fulfillment |
+| `mock_bops_order` | Order Mocking | `customer_order_id` | None | Mocks Buy Online Pickup In Store (BOPS) order payload |
+| `mock_boss_order` | Order Mocking | `customer_order_id` | None | Mocks Buy Online Ship To Store (BOSS) order payload |
+| `mock_sdd_order` | Order Mocking | `customer_order_id` | None | Mocks Same Day Delivery (SDD) order payload |
+| `send_shpshpd_fulfillment` | Fulfillment Router | `customer_order_id` | `order_type="BOPS"` | Dispatches SHPSHPD fulfillment events to store systems |
 
 ---
 
-## 🧠 Session Management & Persistent ChromaDB RAG Architecture
+## 📚 QA Knowledge Base Categories (ChromaDB)
 
-This platform implements a robust, enterprise-grade architecture for conversational session continuity and specialized RAG (Retrieval-Augmented Generation) vector storage.
+When querying `fetch_qa_test_data` or browsing the ChromaDB Knowledge Base:
 
-### 1. How Session Storage Works (Two-Tier Architecture)
-
-To guarantee that QA testers never lose test context across browser refreshes, network drops, or multi-task switching, sessions are managed across two synchronized layers:
-
-```
-┌────────────────────────────────────────────────────────┐
-│             Client Layer (Browser localStorage)        │
-│ • adk_user_sessions_${userId}  (Metadata & Messages)   │
-│ • adk_active_session_id_${userId} (Current Pointer)    │
-└───────────────────────────┬────────────────────────────┘
-                            │
-               Bidirectional Synchronization
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│            Server Layer (sessions_store.json)          │
-│ • In-Memory SESSIONS_DB Cache                          │
-│ • Disk Persisted JSON Store                            │
-│ • Full Google ADK Event Stream Envelopes               │
-└────────────────────────────────────────────────────────┘
-```
-
-#### A. Client-Side State (`frontend/app.js`)
-* **Namespace Isolation**: Sessions are isolated by `userId` (e.g. `adk_user_sessions_qa_tester_1` and `adk_active_session_id_qa_tester_1`).
-* **Instant Switching**: Selecting a chat in the sidebar rehydrates the full conversational history instantly without blocking network requests.
-* **Smart Auto-Titling**: New chats are dynamically renamed from the user's initial prompt (e.g. *"Star Money Loyalty Rewards..."*) while maintaining a persistent UUID.
-
-#### B. Server-Side Persistence (`server.py` & `sessions_store.json`)
-* **ADK Event Envelopes**: When `/run` executes, every turn is recorded as a structured event containing:
-  - User input text parts.
-  - Model thought signatures and candidate text parts.
-  - `functionCall` parameters (tool name and arguments).
-  - `functionResponse` payloads (tool execution results).
-* **Automatic Recovery**: If the client clears browser storage, `GET /apps/{appName}/users/{userId}/sessions` restores all historical sessions directly from `sessions_store.json`.
+* **Web IDs / Product PDPs**: `SHIP`, `BOPS`, `BOSS`, `GWP`, `VGC`, `EGC`, `2 TIER`, `PWP`, `3P`, `COLOR & SIZE PDP`, `CHANEL PDP`, `BT - BIG TICKET`, `LTL`, `WNM`
+* **Payment & Loyalty**: `CREDIT CARDS` (Visa, Mastercard, Amex, Discover), `MACY'S CARDS` (Prop Gold, Prop Platinum, Amex, Amex BT, Working BT), `PAYPAL`, `GIFT CARDS` ($20–$300), `SANDBOX CARDS`
+* **Addresses**: `ADDRESS`, `SHIPPING ADDRESS` (San Francisco, Tyson's Corner, etc.)
 
 ---
 
-### 2. How RAG Is Stored (ChromaDB Architecture)
+## 🛠️ Prerequisites & Installation
 
-Instead of transient in-memory lists or static JSON files, the vector store is powered by **ChromaDB** running in persistent embedded mode:
+1. **Python 3.10+** installed.
+2. Install project dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-* **Storage Path**: `./chroma_db/` directory managed via `chromadb.PersistentClient(path="./chroma_db")`.
-* **Collection Name**: `qa_knowledge_base`.
-* **Distance Metric**: Cosine space (`metadata={"hnsw:space": "cosine"}`).
-  - ChromaDB computes cosine distance: $d \in [0, 2]$.
-  - The cosine similarity score is computed as: $\text{Cosine Similarity} = 1.0 - d$.
-* **Cold-Start Seed Migration**:
-  - When the ChromaDB collection is empty upon launch (e.g., fresh container deployment), `RAGVectorStore` inspects `rag_vector_store.json`.
-  - It automatically migrates and vectorizes the **43 default QA entities** (19 test cards, 21 Web IDs/SKUs, and 3 rich feature intelligence specifications).
-* **Lossless Metadata Serialization**:
-  - ChromaDB strictly requires primitive values (`str`, `int`, `float`, `bool`) in metadata dictionaries.
-  - `to_chroma_metadata()` flattens primary attributes (`doc_id`, `entity_type`, `title`, `created_at`, `card_type`, `card_number`, `cid`, `exp`, `category`, `product_id`, `zip_code`, `platform`, `image_url`, `video_url`) for native ChromaDB filtering.
-  - It stores the entire original payload as a JSON-serialized string in `_full_meta_json`.
-  - `from_chroma_doc()` rehydrates the original structured dictionary losslessly on every retrieval.
+3. **Configure Environment Variables**:
+   Copy `.env.example` to `.env` and set your `GOOGLE_API_KEY`:
+   ```bash
+   cp .env.example .env
+   ```
+   Or set it directly in your terminal:
+   ```bash
+   export GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY_HERE"
+   ```
 
 ---
 
-### 3. Specialized Chunking & Data Ingestion Pipeline
+## 🚀 Running the Agent
 
-Generic paragraph chunking causes severe semantic dilution when applied to structured QA data (e.g., mixing a CVV with product dimensions). TestSense AI utilizes **three distinct, entity-specific chunking strategies**:
+Make sure your working directory is the `qa_ai_agent` root folder:
 
-```
-                       ┌─────────────────────────┐
-                       │  User / Dashboard Input │
-                       └────────────┬────────────┘
-                                    │
-         ┌──────────────────────────┼──────────────────────────┐
-         ▼                          ▼                          ▼
-┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│  Cards Chunking  │       │ Feature Chunking │       │Test Data Chunking│
-│ (chunk_card_item)│       │(chunk_feature_item)│     │(chunk_test_data) │
-├──────────────────┤       ├──────────────────┤       ├──────────────────┤
-│• Card Type & Num │       │• Feature Name    │       │• Category / Type │
-│• CVV/CID & Expiry│       │• Target Platform │       │• Web ID / SKU    │
-│• Balance & Limit │       │• Expected Logic  │       │• Product Name    │
-│• Billing Address │       │• Edge Case Issues│       │• Store Zip Code  │
-│• Channel Notes   │       │• What to Observe │       │• Full Details    │
-│• Pay Keywords    │       │• Video/Img Links │       │• SKU Keywords    │
-└────────┬─────────┘       └────────┬─────────┘       └────────┬─────────┘
-         │                          │                          │
-         └──────────────────────────┼──────────────────────────┘
-                                    │
-                                    ▼
-                 ┌──────────────────────────────────────┐
-                 │       Dense Embedding Engine         │
-                 │   Google gemini-embedding-001 (768d) │
-                 │      [Offline Fallback: 256d]        │
-                 └──────────────────┬───────────────────┘
-                                    │
-                                    ▼
-                 ┌──────────────────────────────────────┐
-                 │     ChromaDB Collection Upsert       │
-                 │ (Collection: qa_knowledge_base in    │
-                 │  ./chroma_db with HNSW Cosine Index) │
-                 └──────────────────┬───────────────────┘
-                                    │
-                                    ▼
-                 ┌──────────────────────────────────────┐
-                 │ Real-Time Dashboard Breakdown Sync   │
-                 │ (Interactive Categories & Card Tags) │
-                 └──────────────────────────────────────┘
+```bash
+cd /path/to/qa_ai_agent
 ```
 
-#### A. Payment & Test Cards Strategy (`chunk_card_item`)
-* Extracts: `card_type`, `card_number`, `cid`, `exp`, `amount`, `address`, and `notes`.
-* Formats semantic chunk text with `[ENTITY: QA PAYMENT & TEST CARD]` header.
-* Injects payment keywords (`sandbox`, `loyalty`, `credit`, `debit`, `prop`) to guarantee high-scoring retrieval for both exact card queries and fuzzy natural language prompts.
-
-#### B. Feature Intelligence Strategy (`chunk_feature_item`)
-* Extracts: `name`, `platform` (e.g. `MCOM Site & App`, `BCOM`), `expected` behavior, potential `issues` (edge cases), `observe` (acceptance criteria & what to look for), `image_url` (screenshots), and `video_url` (walkthrough demos).
-* Formats semantic chunk text with `[ENTITY: FEATURE SPECIFICATION & QA INTELLIGENCE]` header.
-* Enables the AI agent to give precise answers to questions like *"What are the potential edge cases for BOPS?"* and provide interactive video/image demo links.
-
-#### C. QA Test Data & Web ID Strategy (`chunk_test_data_item`)
-* Extracts: `category` (`BOPS`, `BOSS`, `SHIP`, `GWP`, `VGC`, `EGC`, `2 TIER`, `PWP`, `3P`, `BT`, `LTL`, `WNM`), `product_id`, `product_name`, `zip_code`, and `description`.
-* Formats semantic chunk text with `[ENTITY: QA TEST DATA & WEB ID]` header.
-* Maps product taxonomy and fulfillment rules to exact Web IDs.
-
----
-
-### 4. Embedding Models, Dimensions & Fallback Architecture
-
-| Parameter | Primary Cloud Vectorizer | Deterministic Fallback Vectorizer |
-|---|---|---|
-| **Model Name** | `gemini-embedding-001` | Internal Dense Token-Hash Vectorizer |
-| **Provider** | Google GenAI (`google-genai` SDK) | Local CPU Python Runtime |
-| **Embedding Dimensions** | **768 dimensions** | **256 dimensions** |
-| **Normalization** | Euclidean L2 Norm ($\vec{v} / \|\vec{v}\|$) | Euclidean L2 Norm ($\vec{v} / \|\vec{v}\|$) |
-| **Network Requirements** | HTTPS Outbound to Google APIs | 100% Offline / Zero Network Dependency |
-| **Use Case** | Production cloud & standard dev runs | Corporate proxy, VPN with SSL intercept, offline testing |
-
-#### A. Custom Chroma Embedding Function
-To prevent ChromaDB from attempting to download external HuggingFace models (which fail behind enterprise firewalls with `[SSL: CERTIFICATE_VERIFY_FAILED]`), `rag_service.py` implements a custom embedding class:
-```python
-class GeminiChromaEmbeddingFunction(EmbeddingFunction):
-    def name(self) -> str:
-        return "gemini_chroma_ef"
-
-    def __call__(self, input: Documents) -> Embeddings:
-        return [generate_embedding(text) for text in input]
+### 1. Interactive Terminal Mode
+```bash
+adk run multi_tool_agent
 ```
 
-#### B. Deterministic Fallback Algorithm
-If the Gemini API is unreachable, `fallback_text_embedding()` activates seamlessly:
-* Computes unigram hash projections with position log-decay weighting ($w_i = 1.0 / (1.0 + \ln(i + 1))$).
-* Extracts bigram contextual tokens ($w_{\text{bigram}} = w \times 0.8$) to capture adjacent word dependencies.
-* Normalizes the vector onto a unit hypersphere ($\|\vec{v}\| = 1.0$) for cosine distance calculations.
+### 2. FastAPI Web Server & ChromaDB Dashboard Mode
+```bash
+python3 server.py
+```
+* **Interactive Web App & Chat**: `http://localhost:8000/app` (or `http://localhost:8000/`)
+* **ChromaDB Ingestion Dashboard**: Click the **RAG Dashboard** tab in the header
+* **Interactive API Documentation**: `http://localhost:8000/docs` (Swagger UI)
 
 ---
-
-### 5. Hybrid Retrieval & Scoring Formula
-
-When a user prompt or API query is sent to ChromaDB via `rag_store.search(query, top_k)`:
-
-1. **Cosine Vector Distance**: ChromaDB fetches the closest candidate embeddings using HNSW index.
-   $$S_{\text{semantic}} = \max(0.0, 1.0 - d_{\text{cosine}})$$
-2. **Lexical Token Overlap**: Tokenizes the query and evaluates term frequency across chunk text.
-   $$S_{\text{keyword}} = \min\left(0.35, \frac{\text{Hits}}{|\text{Query Words}|} \times 0.35\right)$$
-3. **Identifier Exact-Match Boost**:
-   * Exact Card Number match: $+0.40$
-   * Exact Web ID / Product ID match: $+0.40$
-   * Category / Card Type / Platform exact match: $+0.25$
-4. **Composite Score**:
-   $$S_{\text{total}} = \min(1.0, (S_{\text{semantic}} \times 0.65) + S_{\text{keyword}} + S_{\text{id\_boost}})$$
-
----
-
-### 6. Dashboard Composition Breakdown & Selective Deletion
-
-The RAG Dashboard (`http://localhost:8000/app` $\rightarrow$ **RAG Dashboard**) gives QA testers real-time visibility and granular control over the vector database:
-
-* **"What's in ChromaDB?" Content Breakdown**:
-  * Real-time metrics endpoint `GET /api/rag/stats` aggregates counts across categories (`BOPS`, `BOSS`, `SHIP`, `GWP`, `VGC`, `EGC`, `3P`, `BT`, `LTL`, `WNM`), card types (`Prop Gold`, `Prop Platinum`, `Amex`, `Gift Cards`), and platforms.
-  * Interactive breakdown tags allow testers to tap any category or card type to filter the explorer instantly.
-* **Granular Selective Deletion**:
-  * Individual document cards feature a dedicated deletion icon (`DELETE /api/rag/documents/{doc_id}`).
-  * Multi-select checkboxes enable selecting specific documents to delete.
-  * A floating batch actions bar displays the selection count, a master `Select All Visible` toggle, and a danger-glow **`Delete Selected`** button.
-  * A modal confirmation dialog lists the exact document titles staged for removal (`POST /api/rag/documents/batch-delete`), preventing accidental bulk data loss.
-* **Interactive Media Preview Modals**:
-  * Video walkthroughs (`.mp4`, `.webm`, YouTube) and image assets (`.jpg`, `.png`, Unsplash) render as interactive action chips (`▶ Video Demo`, `🖼 Screenshot`).
-  * Available in both the Dashboard Knowledge Explorer and inside chat messages, opening a high-resolution preview modal with inline playback and fullscreen external viewing.
-
----
-
 
 ## 🌐 Cloud Hosting & Deployment Guide
 
