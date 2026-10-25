@@ -1196,16 +1196,13 @@ body::after {
     display: inline-flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 8px !important;
-    white-space: nowrap !important;
+    gap: 10px !important;
     width: fit-content !important;
-    min-width: max-content !important;
-    max-width: none !important;
+    max-width: min(85vw, 500px) !important;
     padding: 10px 16px !important;
     border-radius: 18px !important;
     background: var(--agent-msg-bg) !important;
     border: 1px solid var(--bg-card-border) !important;
-    word-break: keep-all !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
 }
 
@@ -1213,9 +1210,8 @@ body::after {
     font-size: 13.5px;
     font-weight: 500;
     color: var(--text-primary);
-    white-space: nowrap !important;
     letter-spacing: 0.2px;
-    line-height: 1;
+    line-height: 1.35;
 }
 
 .typing-indicator-bubble .typing-dots {
@@ -3067,7 +3063,7 @@ textarea::placeholder {
 
     .typing-indicator-bubble {
         padding: 9px 14px !important;
-        max-width: none !important;
+        max-width: 88vw !important;
         width: fit-content !important;
     }
 

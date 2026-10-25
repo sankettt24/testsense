@@ -333,10 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 appendMessageToDOM('user', msg.text);
             } else if (msg.type === 'agent') {
                 appendMessageToDOM('agent', msg.text);
-            } else if (msg.type === 'tool_call') {
-                appendToolInvocationToDOM(msg.name, msg.args);
-            } else if (msg.type === 'tool_resp') {
-                appendToolResponseToDOM(msg.name, msg.response);
             }
         });
 
@@ -787,21 +783,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 appName: appName,
                 userId: userId,
                 sessionId: currentSessionId,
+                stream: true,
                 newMessage: {
                     role: "user",
                     parts: [{ text: text }]
                 }
             };
 
-            const response = await fetch(`${baseUrl}/run`, {
+            const response = await fetch(`${baseUrl}/run_stream`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream'
+                },
                 body: JSON.stringify(payload)
             });
 
-            typingEl.remove();
-
             if (!response.ok) {
+                if (typingEl && typingEl.parentNode) typingEl.remove();
                 const errData = await response.json().catch(() => ({}));
                 const errText = `❌ Server Error (${response.status}): ${errData.detail || 'Failed to process request.'}`;
                 appendMessageToDOM('agent', errText);
@@ -811,53 +810,78 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const events = await response.json();
-            console.log('ADK Run Events:', events);
+            // Real-time SSE Stream Reader
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let streamingRow = null;
+            let accumulatedText = '';
 
-            let hasTextResponse = false;
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
 
-            if (Array.isArray(events)) {
-                for (const event of events) {
-                    if (event.content && event.content.parts) {
-                        for (const part of event.content.parts) {
-                            if (part.functionCall) {
-                                appendToolInvocationToDOM(part.functionCall.name, part.functionCall.args);
-                                session.messages.push({
-                                    type: 'tool_call',
-                                    name: part.functionCall.name,
-                                    args: part.functionCall.args,
-                                    timestamp: Date.now()
-                                });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // keep trailing incomplete chunk
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed.startsWith('data:')) continue;
+                    const rawJson = trimmed.slice(5).trim();
+                    if (!rawJson) continue;
+
+                    try {
+                        const event = JSON.parse(rawJson);
+
+                        if (event.type === 'tool_call') {
+                            // Update thinking animation with the active tool being called
+                            updateTypingIndicator(typingEl, event.tool, event.label);
+                        } else if (event.type === 'tool_response') {
+                            // Tool finished execution
+                            updateTypingIndicator(typingEl, event.tool, `Analyzing results...`);
+                        } else if (event.type === 'chunk') {
+                            // Response has arrived: remove the thinking indicator and stream response!
+                            if (typingEl && typingEl.parentNode) {
+                                typingEl.remove();
                             }
-                            else if (part.functionResponse) {
-                                appendToolResponseToDOM(part.functionResponse.name, part.functionResponse.response);
-                                session.messages.push({
-                                    type: 'tool_resp',
-                                    name: part.functionResponse.name,
-                                    response: part.functionResponse.response,
-                                    timestamp: Date.now()
-                                });
+                            if (!streamingRow) {
+                                streamingRow = createStreamingMessageRow();
                             }
-                            else if (part.text) {
-                                appendMessageToDOM('agent', part.text);
-                                session.messages.push({
-                                    type: 'agent',
-                                    text: part.text,
-                                    timestamp: Date.now()
-                                });
-                                hasTextResponse = true;
+                            accumulatedText += event.text;
+                            updateStreamingMessage(streamingRow, accumulatedText);
+                        } else if (event.type === 'done') {
+                            if (event.full_text && !accumulatedText) {
+                                accumulatedText = event.full_text;
                             }
+                        } else if (event.type === 'error') {
+                            if (typingEl && typingEl.parentNode) typingEl.remove();
+                            appendMessageToDOM('agent', `❌ ${event.error}`);
                         }
+                    } catch (err) {
+                        console.warn('Failed to parse SSE event:', err);
                     }
                 }
             }
 
-            if (!hasTextResponse) {
-                const defaultMsg = 'Request completed successfully.';
-                appendMessageToDOM('agent', defaultMsg);
+            // Remove thinking indicator if still present
+            if (typingEl && typingEl.parentNode) {
+                typingEl.remove();
+            }
+
+            if (streamingRow && accumulatedText) {
+                updateStreamingMessage(streamingRow, accumulatedText);
                 session.messages.push({
                     type: 'agent',
-                    text: defaultMsg,
+                    text: accumulatedText,
+                    timestamp: Date.now()
+                });
+            } else if (!streamingRow) {
+                const finalMsg = accumulatedText || 'Request completed successfully.';
+                appendMessageToDOM('agent', finalMsg);
+                session.messages.push({
+                    type: 'agent',
+                    text: finalMsg,
                     timestamp: Date.now()
                 });
             }
@@ -866,7 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSessionRecord(session);
 
         } catch (error) {
-            if (typingEl) typingEl.remove();
+            if (typingEl && typingEl.parentNode) typingEl.remove();
             console.error('Run Error:', error);
             const connErr = `❌ Connection error: Could not reach server at ${baseUrl}. Ensure your server is running.`;
             appendMessageToDOM('agent', connErr);
@@ -1039,8 +1063,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Bind interactive media preview buttons in chat
-        row.querySelectorAll('.chat-media-btn').forEach(btn => {
+        bindBubbleMediaListeners(row);
+        messagesContainer.appendChild(row);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Bind interactive media preview buttons in chat messages
+    function bindBubbleMediaListeners(container) {
+        if (!container) return;
+        container.querySelectorAll('.chat-media-btn').forEach(btn => {
+            if (btn._hasMediaBound) return;
+            btn._hasMediaBound = true;
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1052,7 +1085,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Intercept regular links if they point to videos or images
-        row.querySelectorAll('a').forEach(anchor => {
+        container.querySelectorAll('a').forEach(anchor => {
+            if (anchor._hasMediaBound) return;
+            anchor._hasMediaBound = true;
             const href = anchor.getAttribute('href');
             if (href && (isVideoLink(href, anchor.textContent) || isImageLink(href, anchor.textContent))) {
                 anchor.addEventListener('click', (e) => {
@@ -1063,50 +1098,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-
-        messagesContainer.appendChild(row);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Render Tool Invocation Card to DOM
-    function appendToolInvocationToDOM(toolName, toolArgs) {
+    // Create streaming assistant message bubble
+    function createStreamingMessageRow() {
         const row = document.createElement('div');
         row.className = 'message-row agent';
-
         row.innerHTML = `
-            <div class="avatar"><i class="fa-solid fa-gear"></i></div>
+            <div class="avatar"><i class="fa-solid fa-robot"></i></div>
             <div class="message-content">
-                <div class="tool-card">
-                    <div class="tool-header">
-                        <span><i class="fa-solid fa-bolt"></i> Executing Tool: <code>${toolName}</code></span>
-                    </div>
-                    <div class="tool-body">${escapeHtml(JSON.stringify(toolArgs, null, 2))}</div>
-                </div>
+                <div class="bubble"></div>
             </div>
         `;
-
         messagesContainer.appendChild(row);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return row;
     }
 
-    // Render Tool Output Response to DOM
-    function appendToolResponseToDOM(toolName, responseData) {
-        const row = document.createElement('div');
-        row.className = 'message-row agent';
-
-        row.innerHTML = `
-            <div class="avatar"><i class="fa-solid fa-check-double"></i></div>
-            <div class="message-content">
-                <div class="tool-card" style="border-color: rgba(16, 185, 129, 0.4);">
-                    <div class="tool-header" style="color: #10b981;">
-                        <span><i class="fa-solid fa-database"></i> Tool Response Output</span>
-                    </div>
-                    <div class="tool-body">${escapeHtml(JSON.stringify(responseData, null, 2))}</div>
-                </div>
-            </div>
-        `;
-
-        messagesContainer.appendChild(row);
+    // Incrementally update streaming assistant message
+    function updateStreamingMessage(row, fullText) {
+        if (!row) return;
+        const bubble = row.querySelector('.bubble');
+        if (bubble) {
+            bubble.innerHTML = formatChatMarkdown(fullText);
+            bindBubbleMediaListeners(row);
+        }
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
@@ -1130,6 +1146,17 @@ document.addEventListener('DOMContentLoaded', () => {
         messagesContainer.appendChild(row);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         return row;
+    }
+
+    // Update Typing Indicator with active tool status
+    function updateTypingIndicator(row, toolName, friendlyLabel) {
+        if (!row) return;
+        const textSpan = row.querySelector('.typing-text');
+        if (textSpan) {
+            const display = friendlyLabel || (toolName ? `Calling ${toolName}` : 'Thinking');
+            textSpan.innerHTML = `<i class="fa-solid fa-gear fa-spin" style="margin-right: 6px; color: var(--accent-blue);"></i> Calling <strong>${escapeHtml(display)}</strong>`;
+        }
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     function escapeHtml(str) {

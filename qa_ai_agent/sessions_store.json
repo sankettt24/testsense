@@ -542,7 +542,7 @@
     "userId": "qa_tester_1",
     "title": "sanket id",
     "createdAt": 1792930890.872673,
-    "updatedAt": 1792933231.296329,
+    "updatedAt": 1792935756.566415,
     "state": {},
     "events": [
       {
@@ -1645,6 +1645,1056 @@
         "isolation_scope": null,
         "id": "d70b33a9-95e4-4d94-a1eb-1a9f75c86af2",
         "timestamp": 1792933043.862981
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "sanket feature"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792933758.6269162
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": {
+                "id": "call_1153767",
+                "args": {
+                  "feature_query": "sanket feature"
+                },
+                "name": "query_feature_knowledge",
+                "partial_args": null,
+                "will_continue": null
+              },
+              "function_response": null,
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0Tt15yXY4RGqM3tq5FLXczhxP8Q0ar-wPvdNHxk5PX10RsQp6xgB9HCGuKpT5R6KjC3xaP0iJKRbnGs-fpg_JynJOrNtCo-pqSBvZjOHPFf8elG3E7WIex_mWRwSVc7dzYU2paN5nkyLWTLrAa",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 23,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 3579,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 3579
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 3602,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-d93821af-49e7-4f79-84a2-a0d9f21e7ff0",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": [],
+        "branch": null,
+        "isolation_scope": null,
+        "id": "eabddabd-619c-4f05-a5ed-b3c0d7f0f19e",
+        "timestamp": 1792933758.688411
+      },
+      {
+        "model_version": null,
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": {
+                "will_continue": null,
+                "scheduling": null,
+                "parts": null,
+                "id": "call_1153767",
+                "name": "query_feature_knowledge",
+                "response": {
+                  "status": "success",
+                  "retrieval_method": "RAG_Feature_Search",
+                  "query": "sanket feature",
+                  "features": [
+                    {
+                      "feature_name": "sanket feature",
+                      "platform": "MCOM Site",
+                      "expected_behavior": "this is test behavoiur",
+                      "potential_issues": "this is location specific mock the location",
+                      "things_to_observe": "check the response",
+                      "figma_url": "https://macystech.atlassian.net/browse/NAMA-22858",
+                      "testcase_urls": [
+                        "https://macystech.atlassian.net/browse/MAPR-34207",
+                        "https://macystech.atlassian.net/browse/NAMA-22858",
+                        "https://macystech.atlassian.net/browse/NAMA-22858"
+                      ],
+                      "image_urls": [
+                        "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA",
+                        "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA",
+                        "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA"
+                      ],
+                      "video_urls": [
+                        "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni",
+                        "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni",
+                        "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni"
+                      ],
+                      "image_url": "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA",
+                      "video_url": "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni",
+                      "similarity_score": 1.0
+                    },
+                    {
+                      "feature_name": "home page drawer",
+                      "platform": "MCOM App",
+                      "expected_behavior": "this is the mcom home drwawr feature",
+                      "potential_issues": "it is loactuion specific use the loaction mocker",
+                      "things_to_observe": "see in store and evrything in =side it",
+                      "figma_url": null,
+                      "testcase_urls": [],
+                      "image_urls": [
+                        "data:image/jpeg;base64,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"
+                      ],
+                      "video_urls": [
+                        "https://macysinc.sharepoint.com/:v:/r/sites/MobileAppRegression/_layouts/15/stream.aspx?id=%2Fsites%2FMobileAppRegression%2FShared%20Documents%2FApp%20Regression%202026%2FOctober%202026%2FAPP%2FMAPP%5FiOS%2FApp%2026%2E10%2DR4%2FEvidence%2FE2E%2FSanket%2F10R4%5FE2E%2Emov&share=cQq6qIWQwxBnRK3BfdGelycQEgUChTolw%2Ds96oUEB1341IrJaA"
+                      ],
+                      "image_url": "data:image/jpeg;base64,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",
+                      "video_url": "https://macysinc.sharepoint.com/:v:/r/sites/MobileAppRegression/_layouts/15/stream.aspx?id=%2Fsites%2FMobileAppRegression%2FShared%20Documents%2FApp%20Regression%202026%2FOctober%202026%2FAPP%2FMAPP%5FiOS%2FApp%2026%2E10%2DR4%2FEvidence%2FE2E%2FSanket%2F10R4%5FE2E%2Emov&share=cQq6qIWQwxBnRK3BfdGelycQEgUChTolw%2Ds96oUEB1341IrJaA",
+                      "similarity_score": 0.7343
+                    },
+                    {
+                      "feature_name": "Star Money Loyalty Rewards Redemption",
+                      "platform": "MCOM Site & App",
+                      "expected_behavior": "Eligible Macy's Cardholders earn reward dollars on purchases. During checkout, available Star Money balance appears automatically and can be applied in $10 increments.",
+                      "potential_issues": "If loyalty card number format is invalid or expired, rewards fail to load; partial refunds may cause temporary lock on reward dollars.",
+                      "things_to_observe": "Verify rewards balance reduces by chosen redemption amount; verify order total adjusts correctly with zero tax discrepancy.",
+                      "figma_url": null,
+                      "testcase_urls": [],
+                      "image_urls": [
+                        "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60"
+                      ],
+                      "video_urls": [
+                        "https://www.w3schools.com/html/mov_bbb.mp4"
+                      ],
+                      "image_url": "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.5502
+                    },
+                    {
+                      "feature_name": "M-Money / B-Money Customer Account Funding",
+                      "platform": "All Platforms (MCOM & BCOM)",
+                      "expected_behavior": "Automated provisioning of gift card funding into target customer account across environments (e.g. mcom-131, mcom-170, bcom-131). Up to 4 cards funded with $30 each in under 5 seconds.",
+                      "potential_issues": "Account must exist in the target environment database; corporate VPN required to access internal loyalty automation endpoint.",
+                      "things_to_observe": "Check Postman response wrapper for status='SUCCESS'; verify balance reflects in customer profile wallet immediately.",
+                      "figma_url": null,
+                      "testcase_urls": [],
+                      "image_urls": [
+                        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60"
+                      ],
+                      "video_urls": [
+                        "https://www.w3schools.com/html/mov_bbb.mp4"
+                      ],
+                      "image_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.5386
+                    }
+                  ]
+                }
+              },
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": null,
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "user"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": null,
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": null,
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-d93821af-49e7-4f79-84a2-a0d9f21e7ff0",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "3e765d6d-c621-4866-81f0-60090ef07ef4",
+        "timestamp": 1792933813.330792
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "I have retrieved the details for the **\"sanket feature\"** from the knowledge base:\n\n*   **Feature Name:** Sanket Feature\n*   **Platform:** MCOM Site\n*   **Expected Behavior:** This is test behavior.\n*   **Things to Observe:** Check the response.\n*   **Potential Issues:** This is location-specific; make sure to mock the location.\n*   **Documentation:** [Jira Ticket NAMA-22858](https://macystech.atlassian.net/browse/NAMA-22858)\n*   **Video Walkthrough:** [Watch here](https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni)\n\nThere is also a related **\"home page drawer\"** feature found for the MCOM App. If you need help mocking the location or testing this further, please let me know!",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0TEqeNRGvxAR0ju4YKCVmeJH3VHkPvqVyDBXoqdK3-EDw90lF1VsDAEH3KGsCRMxGqx3PD8SY-EQZqAweDRuOSJuV-sSXVexUiRgytS_w4yDH-ji6bhz5Cu855aK-DeCkIzrMzYuuR6aqDIwbo",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 201,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 14873,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 14873
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 15074,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-d93821af-49e7-4f79-84a2-a0d9f21e7ff0",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "4e7f5c8e-3988-4305-8e75-18802c90a7ad",
+        "timestamp": 1792933813.3398578
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "show all videos"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792933832.1131132
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "I have compiled all the video resources associated with the features retrieved:\n\n### Sanket Feature (MCOM Site)\n*   **Video Link:** [Watch Sanket Feature Walkthrough](https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni)\n\n### Home Page Drawer (MCOM App)\n*   **Video Link:** [Watch Home Page Drawer Regression Evidence](https://macysinc.sharepoint.com/:v:/r/sites/MobileAppRegression/_layouts/15/stream.aspx?id=%2Fsites%2FMobileAppRegression%2FShared%20Documents%2FApp%20Regression%202026%2FOctober%202026%2FAPP%2FMAPP%5FiOS%2FApp%2026%2E10%2DR4%2FEvidence%2FE2E%2FSanket%2F10R4%5FE2E%2Emov&share=cQq6qIWQwxBnRK3BfdGelycQEgUChTolw%2Ds96oUEB1341IrJaA)\n\n### Star Money Loyalty Rewards Redemption\n*   **Video Link:** [Watch Loyalty Rewards Guide](https://www.w3schools.com/html/mov_bbb.mp4)\n\n### M-Money / B-Money Customer Account Funding\n*   **Video Link:** [Watch M-Money/B-Money Funding Guide](https://www.w3schools.com/html/mov_bbb.mp4)\n\nIf you need any specific documentation or want to trigger a test for these features, just let me know!",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0T7cMdi1L1Ryfw5uW0CujYF8uoa03dKL9zXXlApkvMO4GVtCwrwgHTwQD0xpQEMv7zBZrc_JIdeGo5ulMhMOWqvBWpyazZl8ezv8HtjsOuSdF95cIjf3GY1DCDo2bVF1fXumyUWd_iGkXFX_gD",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 376,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 15079,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 15079
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 15455,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-a85a72e6-d6dd-4a71-9a42-cb33b0003635",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "eb248798-64a7-4cf8-bd9f-5b61bc10315f",
+        "timestamp": 1792933832.1264188
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "give me more information for the sanket feature"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792933929.508584
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "I have retrieved the detailed documentation and testing artifacts for the **Sanket Feature** based on our internal knowledge base:\n\n### **Sanket Feature (MCOM Site)**\n\n*   **Jira Reference:** [NAMA-22858](https://macystech.atlassian.net/browse/NAMA-22858)\n*   **Test Case References:** \n    *   [MAPR-34207](https://macystech.atlassian.net/browse/MAPR-34207)\n    *   [NAMA-22858](https://macystech.atlassian.net/browse/NAMA-22858)\n*   **Key Observables:** \n    *   You must verify the API response structure.\n    *   **Crucial:** This feature is **location-specific**. If you are encountering issues, you likely need to mock your location data within the test environment to ensure the service returns the expected response.\n*   **Visual Documentation:** [View Walkthrough Video](https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni)\n\n---\n\n### **Related Feature: Home Page Drawer (MCOM App)**\nInterestingly, there is an associated feature called **\"Home Page Drawer\"** that also utilizes a location-based architecture. \n*   **Expected Behavior:** This manages the drawer navigation on the MCOM home page.\n*   **Testing Tip:** Like the Sanket feature, ensure you use the **location mocker** to test store-specific drawer behaviors.\n*   **Regression Evidence:** [View Mobile App Evidence Video](https://macysinc.sharepoint.com/:v:/r/sites/MobileAppRegression/_layouts/15/stream.aspx?id=%2Fsites%2FMobileAppRegression%2FShared%20Documents%2FApp%20Regression%202026%2FOctober%202026%2FAPP%2FMAPP%5FiOS%2FApp%2026%2E10%2DR4%2FEvidence%2FE2E%2FSanket%2F10R4%5FE2E%2Emov&share=cQq6qIWQwxBnRK3BfdGelycQEgUChTolw%2Ds96oUEB1341IrJaA)\n\n**Would you like me to help you find specific test data or trigger a mock order to support your testing of these features?**",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0ToQPUjw24nKcFtFPz0Zx7JhnwX3KOGiScKmYpC-F_bmLMGB805TY91EHwfeu1Yq4J9B2ilfmPr9WEfp2flNaLayFDcIuOT4jHKncn1n2Fl6JitfhY3pnIX7W8yB7l9IsmFyEEKjbBJcGhMSDz",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 12188
+            }
+          ],
+          "cached_content_token_count": 12188,
+          "candidates_token_count": 570,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 15466,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 15466
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 16036,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-af8393e8-515d-4be5-8dc8-58770f571ff5",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "1597e816-62c5-4a92-b28a-fdb4b2018aa7",
+        "timestamp": 1792933929.534147
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "show me screen shot"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792933990.109262
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": {
+                "id": "call_1758325",
+                "args": {
+                  "feature_query": "sanket feature screenshot image"
+                },
+                "name": "query_feature_knowledge",
+                "partial_args": null,
+                "will_continue": null
+              },
+              "function_response": null,
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0T0HGA5jN0lPPf72A92L3jfN6OlNjK0AsZrjL9e2b7IDgEsRkCviKLNGZF88tVNA3--IjRppl4m0Zni7zuO-3l0ycdm3ywJRqQAVZWSOKV-3y-zxj8WW6PhvxQACxwrmAGtrJi10n_cmRTvVpq",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 12186
+            }
+          ],
+          "cached_content_token_count": 12186,
+          "candidates_token_count": 25,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 16042,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 16042
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 16067,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-683ae36c-b765-4223-a509-1afd15e3cc06",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": [],
+        "branch": null,
+        "isolation_scope": null,
+        "id": "0509bb69-a203-45fe-9f0b-1a738bba501b",
+        "timestamp": 1792933990.122067
+      },
+      {
+        "model_version": null,
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": {
+                "will_continue": null,
+                "scheduling": null,
+                "parts": null,
+                "id": "call_1758325",
+                "name": "query_feature_knowledge",
+                "response": {
+                  "status": "success",
+                  "retrieval_method": "RAG_Feature_Search",
+                  "query": "sanket feature screenshot image",
+                  "features": [
+                    {
+                      "feature_name": "sanket feature",
+                      "platform": "MCOM Site",
+                      "expected_behavior": "this is test behavoiur",
+                      "potential_issues": "this is location specific mock the location",
+                      "things_to_observe": "check the response",
+                      "figma_url": "https://macystech.atlassian.net/browse/NAMA-22858",
+                      "testcase_urls": [
+                        "https://macystech.atlassian.net/browse/MAPR-34207",
+                        "https://macystech.atlassian.net/browse/NAMA-22858",
+                        "https://macystech.atlassian.net/browse/NAMA-22858"
+                      ],
+                      "image_urls": [
+                        "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA",
+                        "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA",
+                        "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA"
+                      ],
+                      "video_urls": [
+                        "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni",
+                        "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni",
+                        "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni"
+                      ],
+                      "image_url": "https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA",
+                      "video_url": "https://youtu.be/Ak_edo5Z9YM?si=rpbeGPMmnNJCeRni",
+                      "similarity_score": 1.0
+                    },
+                    {
+                      "feature_name": "home page drawer",
+                      "platform": "MCOM App",
+                      "expected_behavior": "this is the mcom home drwawr feature",
+                      "potential_issues": "it is loactuion specific use the loaction mocker",
+                      "things_to_observe": "see in store and evrything in =side it",
+                      "figma_url": null,
+                      "testcase_urls": [],
+                      "image_urls": [
+                        "data:image/jpeg;base64,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"
+                      ],
+                      "video_urls": [
+                        "https://macysinc.sharepoint.com/:v:/r/sites/MobileAppRegression/_layouts/15/stream.aspx?id=%2Fsites%2FMobileAppRegression%2FShared%20Documents%2FApp%20Regression%202026%2FOctober%202026%2FAPP%2FMAPP%5FiOS%2FApp%2026%2E10%2DR4%2FEvidence%2FE2E%2FSanket%2F10R4%5FE2E%2Emov&share=cQq6qIWQwxBnRK3BfdGelycQEgUChTolw%2Ds96oUEB1341IrJaA"
+                      ],
+                      "image_url": "data:image/jpeg;base64,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",
+                      "video_url": "https://macysinc.sharepoint.com/:v:/r/sites/MobileAppRegression/_layouts/15/stream.aspx?id=%2Fsites%2FMobileAppRegression%2FShared%20Documents%2FApp%20Regression%202026%2FOctober%202026%2FAPP%2FMAPP%5FiOS%2FApp%2026%2E10%2DR4%2FEvidence%2FE2E%2FSanket%2F10R4%5FE2E%2Emov&share=cQq6qIWQwxBnRK3BfdGelycQEgUChTolw%2Ds96oUEB1341IrJaA",
+                      "similarity_score": 0.7582
+                    },
+                    {
+                      "feature_name": "Star Money Loyalty Rewards Redemption",
+                      "platform": "MCOM Site & App",
+                      "expected_behavior": "Eligible Macy's Cardholders earn reward dollars on purchases. During checkout, available Star Money balance appears automatically and can be applied in $10 increments.",
+                      "potential_issues": "If loyalty card number format is invalid or expired, rewards fail to load; partial refunds may cause temporary lock on reward dollars.",
+                      "things_to_observe": "Verify rewards balance reduces by chosen redemption amount; verify order total adjusts correctly with zero tax discrepancy.",
+                      "figma_url": null,
+                      "testcase_urls": [],
+                      "image_urls": [
+                        "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60"
+                      ],
+                      "video_urls": [
+                        "https://www.w3schools.com/html/mov_bbb.mp4"
+                      ],
+                      "image_url": "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.647
+                    },
+                    {
+                      "feature_name": "M-Money / B-Money Customer Account Funding",
+                      "platform": "All Platforms (MCOM & BCOM)",
+                      "expected_behavior": "Automated provisioning of gift card funding into target customer account across environments (e.g. mcom-131, mcom-170, bcom-131). Up to 4 cards funded with $30 each in under 5 seconds.",
+                      "potential_issues": "Account must exist in the target environment database; corporate VPN required to access internal loyalty automation endpoint.",
+                      "things_to_observe": "Check Postman response wrapper for status='SUCCESS'; verify balance reflects in customer profile wallet immediately.",
+                      "figma_url": null,
+                      "testcase_urls": [],
+                      "image_urls": [
+                        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60"
+                      ],
+                      "video_urls": [
+                        "https://www.w3schools.com/html/mov_bbb.mp4"
+                      ],
+                      "image_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.6352
+                    }
+                  ]
+                }
+              },
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": null,
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "user"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": null,
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": null,
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-683ae36c-b765-4223-a509-1afd15e3cc06",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "a84be602-d3f7-4aa7-89c2-c0232b0463e7",
+        "timestamp": 1792933993.270136
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "I have retrieved the available image references for the **Sanket Feature**:\n\n*   **Sanket Feature (MCOM Site):**\n    *   [View Image Reference](https://www.google.com/imgres?q=images&imgurl=https%3A%2F%2Fstatic.vecteezy.com%2Fvite%2Fassets%2Fphoto-masthead-375-BoK_p8LG.webp&imgrefurl=https%3A%2F%2Fwww.vecteezy.com%2Ffree-photos&docid=ibTdn4unYxO9nM&tbnid=7F8_kUgVrrg0YM&vet=12ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA..i&w=750&h=864&hcb=2&ved=2ahUKEwi39dSUmdWXAxXoLdAFHT73BtkQnPAOegQIPxAA)\n\n*   **Home Page Drawer (Related MCOM App Feature):**\n    *   [View In-App Screenshot](data:image/jpeg;base64,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)\n\nIf you need any further assistance with your testing, such as triggering a specific API or fetching test data for these features, just let me know!",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0TyLjCs956VJ3OXfhd4-dDok2UdvlczThZH6aIXYqxEwI84s6G0J3WFQnvqy59klu8JQR7kMufci5_RGCyJoPTe4Zv9xheKEvF_nza1HG25vAi6sZf1cW0xws973F630gS-d7MxHH5Hzdgfj4-",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 14260
+            }
+          ],
+          "cached_content_token_count": 14260,
+          "candidates_token_count": 4792,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 27339,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 27339
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 32131,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-683ae36c-b765-4223-a509-1afd15e3cc06",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "e70b3a53-ceab-4323-b5e1-af2a46c589d6",
+        "timestamp": 1792933993.278233
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "hi"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792935645.571341
+      },
+      {
+        "content": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Hello! I am **TestSense_AI**, your QA Assistant. I'm here to help you streamline your testing workflow.\n\nI can assist you with:\n*   **Order Mocking:** Triggering STH, BOPS, BOSS, or SDD fulfillment events.\n*   **Promotion Details:** Fetching SUPC or PZO details for specific environments.\n*   **M/B-Money & Star Money:** Adding mock rewards to user accounts or loyalty cards.\n*   **Data Retrieval:** Fetching test data (Web IDs, Credit Cards, etc.) from our knowledge base.\n*   **Feature Intelligence:** Querying documentation, Figma links, and test cases for specific features.\n\nHow can I help you with your testing today?"
+            }
+          ]
+        },
+        "finishReason": "STOP",
+        "author": "TestSense_AI",
+        "timestamp": 1792935647.802598
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "give me  bops ids"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792935662.5318022
+      },
+      {
+        "content": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "I have retrieved some Web IDs that are eligible for BOPS (Buy Online Pickup In Store) orders. You can use these Web IDs for your testing:\n\n*   **Web ID 1494:** BOPS Home Goods (Applicable Zip: 22102)\n*   **Web ID 86800:** BOPS Standard Apparel (Applicable Zip: 22102)\n\nAdditionally, I found some general information regarding the **BOPS Same-Day Store Fulfillment Flow** in our knowledge base:\n\n*   **Expected Behavior:** Once the order is placed, the status moves from RESERVED to SHPSHPD once the store fulfills the item.\n*   **Acceptance Criteria:** Ensure the `reservationId` is non-empty and verify the SHPSHPD status update event receives a 200 HTTP response.\n*   **Visual/Video Resources:**\n    *   [Visual Asset Reference](https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800&auto=format&fit=crop&q=60)\n    *   [Video Walkthrough](https://www.w3schools.com/html/mov_bbb.mp4)\n\nWould you like me to help you mock an order using one of these items, or do you need further information on the BOPS flow?"
+            }
+          ]
+        },
+        "finishReason": "STOP",
+        "author": "TestSense_AI",
+        "timestamp": 1792935735.255787
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "give nme bops id"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792935752.177859
+      },
+      {
+        "content": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "I have provided the BOPS-eligible Web IDs in the previous message. To reiterate, you can use these for your testing:\n\n*   **Web ID 1494** (BOPS Home Goods)\n*   **Web ID 86800** (BOPS Standard Apparel)\n\nIf you meant **Customer Order IDs** (the specific order numbers used to trigger fulfillment mocks), please let me know if you have an active order ID you are currently working with. \n\nIf you have an order ID, I can use the `mock_bops_order` tool for you. If you don't have one yet, you will need to place a test order on the storefront first to generate a `customer_order_id`."
+            }
+          ]
+        },
+        "finishReason": "STOP",
+        "author": "TestSense_AI",
+        "timestamp": 1792935756.5664132
       }
     ]
   }

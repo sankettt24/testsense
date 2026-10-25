@@ -15,7 +15,9 @@ try:
 except Exception:
     pass
 
+import asyncio
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -305,9 +307,136 @@ class RunAgentRequest(BaseModel):
     userId: str
     sessionId: str
     newMessage: Optional[MessageModel] = None
+    stream: Optional[bool] = False
+
+# Friendly tester labels for QA Agent tools
+TOOL_LABELS: Dict[str, str] = {
+    "fetch_qa_test_data": "Searching RAG Knowledge Base for Test Data",
+    "query_feature_knowledge": "Querying Feature Intelligence & Media Links",
+    "add_m_money": "Executing M-Money / B-Money API",
+    "setup_star_money": "Configuring Star Money Loyalty Card",
+    "get_shipment_ref": "Retrieving Order Details & Reservation ID",
+    "mock_bops_order": "Mocking BOPS Order Fulfillment",
+    "mock_sth_order": "Mocking STH Order Fulfillment",
+    "mock_boss_order": "Mocking BOSS Order Fulfillment",
+    "mock_sdd_order": "Mocking SDD Order Fulfillment",
+    "send_shpshpd_fulfillment": "Publishing SHPSHPD Fulfillment Status",
+    "get_supc_details": "Fetching SUPC Promotion Details",
+    "get_pzo_details": "Fetching PZO Promotion Details"
+}
+
+def _build_adk_user_message(prompt_text: str):
+    ContentClass = None
+    PartClass = None
+    for mod_name in ["google.adk.events", "google.adk.types", "google.adk.models", "google.genai.types"]:
+        try:
+            mod = __import__(mod_name, fromlist=["Content", "Part"])
+            ContentClass = getattr(mod, "Content", None)
+            PartClass = getattr(mod, "Part", None)
+            if ContentClass and PartClass:
+                break
+        except ImportError:
+            continue
+
+    if ContentClass and PartClass:
+        return ContentClass(role="user", parts=[PartClass(text=prompt_text)])
+    elif ContentClass:
+        return ContentClass(role="user", parts=[{"text": prompt_text}])
+    else:
+        class ContentWrapper:
+            def __init__(self, role, parts):
+                self.role = role
+                self.parts = parts
+        class PartWrapper:
+            def __init__(self, text):
+                self.text = text
+        return ContentWrapper(role="user", parts=[PartWrapper(text=prompt_text)])
+
+async def stream_agent_generator(request: RunAgentRequest, prompt_text: str, target_app: str, new_msg: Any):
+    """
+    Streams tool invocation events and response tokens in real-time.
+    In the thinking phase, tells the user which tool is being executed.
+    When the response is generated, streams the response text.
+    Only the response is saved into the chat history (no tool clutter).
+    """
+    yield f"data: {json.dumps({'type': 'status', 'status': 'thinking', 'text': 'Thinking...'})}\n\n"
+    
+    full_text_response = ""
+    try:
+        from google.adk.runners import Runner
+        runner = Runner(agent=root_agent, session_service=SESSION_SERVICE, app_name=target_app)
+        run_res = runner.run_async(
+            user_id=request.userId,
+            session_id=request.sessionId,
+            new_message=new_msg
+        )
+
+        if hasattr(run_res, "__aiter__"):
+            async for ev in run_res:
+                content = getattr(ev, "content", None)
+                parts = getattr(content, "parts", []) if content else []
+                for p in parts:
+                    fn_call = getattr(p, "function_call", None) or (isinstance(p, dict) and p.get("functionCall"))
+                    fn_resp = getattr(p, "function_response", None) or (isinstance(p, dict) and p.get("functionResponse"))
+                    txt = getattr(p, "text", None) or (isinstance(p, dict) and p.get("text"))
+                    
+                    if fn_call:
+                        name = getattr(fn_call, "name", None) or (fn_call.get("name") if isinstance(fn_call, dict) else str(fn_call))
+                        label = TOOL_LABELS.get(name, name.replace("_", " ").title())
+                        logger.info(f"Streaming tool_call: {name} ({label})")
+                        yield f"data: {json.dumps({'type': 'tool_call', 'tool': name, 'label': label})}\n\n"
+                    elif fn_resp:
+                        name = getattr(fn_resp, "name", None) or (fn_resp.get("name") if isinstance(fn_resp, dict) else str(fn_resp))
+                        logger.info(f"Streaming tool_response: {name}")
+                        yield f"data: {json.dumps({'type': 'tool_response', 'tool': name, 'label': f'Completed {name}'})}\n\n"
+                    elif txt:
+                        full_text_response += txt
+                        # Stream natural words for visual real-time response
+                        words = txt.split(" ")
+                        chunk_size = 4
+                        for i in range(0, len(words), chunk_size):
+                            c = " ".join(words[i:i + chunk_size])
+                            if i + chunk_size < len(words):
+                                c += " "
+                            yield f"data: {json.dumps({'type': 'chunk', 'text': c})}\n\n"
+                            await asyncio.sleep(0.015)
+        elif inspect.isawaitable(run_res):
+            res = await run_res
+            events_list = res if isinstance(res, list) else [res]
+            for ev in events_list:
+                content = getattr(ev, "content", None)
+                parts = getattr(content, "parts", []) if content else []
+                for p in parts:
+                    txt = getattr(p, "text", None) or (isinstance(p, dict) and p.get("text"))
+                    if txt:
+                        full_text_response += txt
+                        yield f"data: {json.dumps({'type': 'chunk', 'text': txt})}\n\n"
+    except Exception as e:
+        logger.warning(f"Error in stream_agent_generator: {e}")
+        yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+
+    if not full_text_response:
+        full_text_response = f"Agent {root_agent.name} received your request."
+        yield f"data: {json.dumps({'type': 'chunk', 'text': full_text_response})}\n\n"
+
+    # Save ONLY the response event in session history (no tool call clutter)
+    assistant_event = {
+        "content": {
+            "role": "model",
+            "parts": [{"text": full_text_response}]
+        },
+        "finishReason": "STOP",
+        "author": root_agent.name,
+        "timestamp": time.time()
+    }
+    SESSIONS_DB[request.sessionId]["events"].append(assistant_event)
+    SESSIONS_DB[request.sessionId]["updatedAt"] = time.time()
+    save_sessions_db()
+
+    yield f"data: {json.dumps({'type': 'done', 'full_text': full_text_response})}\n\n"
 
 @app.post("/run")
-async def run_agent(request: RunAgentRequest):
+async def run_agent(request: RunAgentRequest, req: Request):
     prompt_text = ""
     if request.newMessage and request.newMessage.parts:
         prompt_text = " ".join([p.text for p in request.newMessage.parts if p.text])
@@ -347,45 +476,31 @@ async def run_agent(request: RunAgentRequest):
     }
     SESSIONS_DB[request.sessionId].setdefault("events", []).append(user_event)
 
+    new_msg = _build_adk_user_message(prompt_text)
+
+    # Check for streaming request
+    accept_header = req.headers.get("accept", "")
+    if request.stream or "text/event-stream" in accept_header:
+        return StreamingResponse(
+            stream_agent_generator(request, prompt_text, target_app, new_msg),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+
+    # Fallback non-streaming execution
     events_list = []
     try:
         from google.adk.runners import Runner
-        
-        ContentClass = None
-        PartClass = None
-        for mod_name in ["google.adk.events", "google.adk.types", "google.adk.models", "google.genai.types"]:
-            try:
-                mod = __import__(mod_name, fromlist=["Content", "Part"])
-                ContentClass = getattr(mod, "Content", None)
-                PartClass = getattr(mod, "Part", None)
-                if ContentClass and PartClass:
-                    break
-            except ImportError:
-                continue
-
-        if ContentClass and PartClass:
-            new_msg = ContentClass(role="user", parts=[PartClass(text=prompt_text)])
-        elif ContentClass:
-            new_msg = ContentClass(role="user", parts=[{"text": prompt_text}])
-        else:
-            class ContentWrapper:
-                def __init__(self, role, parts):
-                    self.role = role
-                    self.parts = parts
-            class PartWrapper:
-                def __init__(self, text):
-                    self.text = text
-            new_msg = ContentWrapper(role="user", parts=[PartWrapper(text=prompt_text)])
-
         runner = Runner(agent=root_agent, session_service=SESSION_SERVICE, app_name=target_app)
-        
-        # Execute turn via Runner
         run_res = runner.run_async(
             user_id=request.userId,
             session_id=request.sessionId,
             new_message=new_msg
         )
-        
         if hasattr(run_res, "__aiter__"):
             async for ev in run_res:
                 events_list.append(ev)
@@ -397,7 +512,6 @@ async def run_agent(request: RunAgentRequest):
             events_list = res if isinstance(res, list) else [res]
         else:
             events_list = [run_res]
-
     except Exception as adk_err:
         logger.warning(f"Google ADK Runner notice: {adk_err}")
 
@@ -429,6 +543,12 @@ async def run_agent(request: RunAgentRequest):
     save_sessions_db()
 
     return serialized
+
+@app.post("/run_stream")
+async def run_agent_stream(request: RunAgentRequest, req: Request):
+    """Direct streaming endpoint returning Server-Sent Events."""
+    request.stream = True
+    return await run_agent(request, req)
 
 # ==============================================================================
 # RAG Vector Store & Ingestion Dashboard API Endpoints
