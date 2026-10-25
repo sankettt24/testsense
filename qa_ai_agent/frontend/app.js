@@ -37,6 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCancel = document.getElementById('modal-cancel');
     const modalSubmit = document.getElementById('modal-submit');
 
+    // Media Preview Modal Elements
+    const mediaModal = document.getElementById('media-preview-modal');
+    const mediaModalTitle = document.getElementById('media-modal-title');
+    const mediaModalBody = document.getElementById('media-modal-body');
+    const mediaModalClose = document.getElementById('media-modal-close');
+
     // App State
     let currentSessionId = null;
     let appName = 'multi_tool_agent';
@@ -870,6 +876,131 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // =========================================================================
+    // Media Preview Modal Functions & Chat Markdown Parser
+    // =========================================================================
+
+    function isVideoLink(url, text) {
+        if (!url) return false;
+        const u = String(url).toLowerCase();
+        const t = String(text || '').toLowerCase();
+        return /\.(mp4|webm|ogg|mov|mkv)(\?|$)/i.test(u) ||
+               /youtube\.com\/watch|youtu\.be\/|vimeo\.com|w3schools\.com\/html\/mov_/i.test(u) ||
+               /\b(video|walkthrough|recording|demo|watch)\b/i.test(t);
+    }
+
+    function isImageLink(url, text) {
+        if (!url) return false;
+        const u = String(url).toLowerCase();
+        const t = String(text || '').toLowerCase();
+        return /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(u) ||
+               /images\.unsplash\.com|\/photo-|\/image\/|\/img\//i.test(u) ||
+               /\b(image|screenshot|visualization|photo|asset|preview)\b/i.test(t);
+    }
+
+    function openMediaModal(type, url, title) {
+        if (!mediaModal || !mediaModalBody) return;
+        if (mediaModalTitle) {
+            mediaModalTitle.innerHTML = `<i class="fa-solid ${type === 'video' ? 'fa-video' : 'fa-image'}"></i> ${escapeHtml(title || 'Media Asset')}`;
+        }
+
+        if (type === 'video') {
+            if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+                let videoId = '';
+                if (url.includes('youtu.be/')) {
+                    videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
+                } else if (url.includes('v=')) {
+                    videoId = url.split('v=')[1].split('&')[0];
+                }
+                mediaModalBody.innerHTML = `
+                    <iframe class="media-preview-video" style="width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 8px;" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Video on YouTube
+                    </a>
+                `;
+            } else {
+                mediaModalBody.innerHTML = `
+                    <video class="media-preview-video" controls autoplay style="max-height: 70vh; width: 100%; border-radius: 8px;">
+                        <source src="${escapeHtml(url)}" type="video/mp4">
+                        Your browser does not support HTML5 video tag.
+                    </video>
+                    <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Video in New Tab
+                    </a>
+                `;
+            }
+        } else {
+            mediaModalBody.innerHTML = `
+                <img src="${escapeHtml(url)}" alt="Screenshot Preview" class="media-preview-img" style="max-height: 70vh; max-width: 100%; border-radius: 8px; object-fit: contain;" onerror="this.src='logo.png';">
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Image Fullscreen
+                </a>
+            `;
+        }
+
+        mediaModal.classList.add('active');
+    }
+
+    function closeMediaModal() {
+        if (!mediaModal) return;
+        mediaModal.classList.remove('active');
+        if (mediaModalBody) mediaModalBody.innerHTML = '';
+    }
+
+    if (mediaModalClose) mediaModalClose.addEventListener('click', closeMediaModal);
+    if (mediaModal) {
+        mediaModal.addEventListener('click', (e) => {
+            if (e.target === mediaModal) closeMediaModal();
+        });
+    }
+
+    // Markdown Parser with interactive Video & Image Chips
+    function formatChatMarkdown(rawText) {
+        if (!rawText) return '';
+
+        // 1. First extract and protect code blocks
+        const codeBlocks = [];
+        let text = rawText.replace(/```([\s\S]*?)```/g, (m, code) => {
+            const idx = codeBlocks.length;
+            codeBlocks.push(escapeHtml(code.trim()));
+            return `__CODE_BLOCK_${idx}__`;
+        });
+
+        // 2. Parse markdown links [label](url) -> interactive media chips if video/image
+        text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (match, label, url) => {
+            const trimmedUrl = url.trim();
+            const trimmedLabel = label.trim();
+            if (isVideoLink(trimmedUrl, trimmedLabel)) {
+                return `<button type="button" class="media-chip media-chip-video chat-media-btn" data-type="video" data-url="${escapeHtml(trimmedUrl)}" data-title="${escapeHtml(trimmedLabel)}"><i class="fa-solid fa-play"></i> ${escapeHtml(trimmedLabel)}</button>`;
+            } else if (isImageLink(trimmedUrl, trimmedLabel)) {
+                return `<button type="button" class="media-chip media-chip-image chat-media-btn" data-type="image" data-url="${escapeHtml(trimmedUrl)}" data-title="${escapeHtml(trimmedLabel)}"><i class="fa-solid fa-image"></i> ${escapeHtml(trimmedLabel)}</button>`;
+            }
+            return `<a href="${escapeHtml(trimmedUrl)}" target="_blank" rel="noopener noreferrer" class="chat-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(trimmedLabel)}</a>`;
+        });
+
+        // 3. Headings
+        text = text.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+        text = text.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+        text = text.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+
+        // 4. Bold & Inline Code
+        text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // 5. Bullet points
+        text = text.replace(/^[*-] (.*)$/gm, '<div class="chat-bullet-row"><span class="chat-bullet">•</span><span>$1</span></div>');
+
+        // 6. Paragraphs and breaks
+        text = text.replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+
+        // 7. Restore code blocks
+        codeBlocks.forEach((code, idx) => {
+            text = text.replace(`__CODE_BLOCK_${idx}__`, `<pre class="code-block"><code>${code}</code></pre>`);
+        });
+
+        return text;
+    }
+
     // Render User/Agent Message Bubble to DOM
     function appendMessageToDOM(sender, text) {
         const row = document.createElement('div');
@@ -877,17 +1008,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const avatarIcon = sender === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
         
-        let formattedText = escapeHtml(text)
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>')
-            .replace(/\n/g, '<br>');
+        const formattedContent = sender === 'user'
+            ? escapeHtml(text).replace(/\n/g, '<br>')
+            : formatChatMarkdown(text);
 
         row.innerHTML = `
             <div class="avatar">${avatarIcon}</div>
             <div class="message-content">
-                <div class="bubble">${formattedText}</div>
+                <div class="bubble">${formattedContent}</div>
             </div>
         `;
+
+        // Bind interactive media preview buttons in chat
+        row.querySelectorAll('.chat-media-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const type = btn.getAttribute('data-type');
+                const url = btn.getAttribute('data-url');
+                const title = btn.getAttribute('data-title');
+                openMediaModal(type, url, title);
+            });
+        });
+
+        // Intercept regular links if they point to videos or images
+        row.querySelectorAll('a').forEach(anchor => {
+            const href = anchor.getAttribute('href');
+            if (href && (isVideoLink(href, anchor.textContent) || isImageLink(href, anchor.textContent))) {
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isVid = isVideoLink(href, anchor.textContent);
+                    openMediaModal(isVid ? 'video' : 'image', href, anchor.textContent || 'Media Preview');
+                });
+            }
+        });
 
         messagesContainer.appendChild(row);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1065,12 +1220,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const countFilterFeature = document.getElementById('count-filter-feature');
     const countFilterCard = document.getElementById('count-filter-card');
     const countFilterTestdata = document.getElementById('count-filter-testdata');
-
-    // Media Modal Elements
-    const mediaModal = document.getElementById('media-preview-modal');
-    const mediaModalTitle = document.getElementById('media-modal-title');
-    const mediaModalBody = document.getElementById('media-modal-body');
-    const mediaModalClose = document.getElementById('media-modal-close');
 
     let currentKbFilter = 'all';
     let cachedDocuments = [];
@@ -1882,45 +2031,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Media Modal Functions
-    function openMediaModal(type, url, title) {
-        if (!mediaModal || !mediaModalBody) return;
-        if (mediaModalTitle) mediaModalTitle.innerHTML = `<i class="fa-solid ${type === 'video' ? 'fa-video' : 'fa-image'}"></i> ${escapeHtml(title || 'Media Asset')}`;
-
-        if (type === 'video') {
-            mediaModalBody.innerHTML = `
-                <video class="media-preview-video" controls autoplay>
-                    <source src="${escapeHtml(url)}" type="video/mp4">
-                    Your browser does not support HTML5 video tag.
-                </video>
-                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Video in New Tab
-                </a>
-            `;
-        } else {
-            mediaModalBody.innerHTML = `
-                <img src="${escapeHtml(url)}" alt="Screenshot Preview" class="media-preview-img" onerror="this.src='logo.png';">
-                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="media-link-external">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Image Fullscreen
-                </a>
-            `;
-        }
-
-        mediaModal.classList.add('active');
-    }
-
-    function closeMediaModal() {
-        if (!mediaModal) return;
-        mediaModal.classList.remove('active');
-        if (mediaModalBody) mediaModalBody.innerHTML = '';
-    }
-
-    if (mediaModalClose) mediaModalClose.addEventListener('click', closeMediaModal);
-    if (mediaModal) {
-        mediaModal.addEventListener('click', (e) => {
-            if (e.target === mediaModal) closeMediaModal();
-        });
-    }
 
     // =========================================================================
     // Initialization: Restore Session on Refresh or Start Fresh

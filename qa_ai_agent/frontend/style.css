@@ -1148,6 +1148,57 @@ body::after {
     -webkit-backdrop-filter: blur(12px);
 }
 
+/* Chat Markdown Formatting & Interactive Media Chips */
+.bubble h1, .bubble h2, .bubble h3, .bubble h4 {
+    margin: 14px 0 6px 0;
+    color: #ffffff;
+    font-weight: 700;
+}
+.bubble h1:first-child, .bubble h2:first-child, .bubble h3:first-child, .bubble h4:first-child {
+    margin-top: 0;
+}
+.bubble h3 {
+    font-size: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 4px;
+    color: #e2e8f0;
+}
+.bubble .chat-bullet-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 5px 0;
+    line-height: 1.55;
+}
+.bubble .chat-bullet {
+    color: #38bdf8;
+    font-size: 14px;
+    line-height: 1.55;
+    flex-shrink: 0;
+}
+.bubble a.chat-link {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+.bubble a.chat-link:hover {
+    color: #7dd3fc;
+    text-decoration: underline;
+}
+.bubble .media-chip {
+    margin: 3px 6px 3px 0;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+}
+.bubble .media-chip:active {
+    transform: scale(0.96);
+}
+
 /* Tool Execution Card */
 .tool-card {
     background: var(--tool-msg-bg);
