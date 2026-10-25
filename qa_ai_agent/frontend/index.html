@@ -382,9 +382,11 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="input-group">
-                                <label for="feature-expected">Expected Behavior & Business Requirements <span class="required-star">*</span></label>
-                                <textarea id="feature-expected" rows="3" placeholder="Explain what the feature should do when working correctly..." required></textarea>
+                            <div class="form-row form-row-full">
+                                <div class="input-group">
+                                    <label for="feature-expected">Expected Behavior & Business Requirements <span class="required-star">*</span></label>
+                                    <textarea id="feature-expected" rows="3" placeholder="Explain what the feature should do when working correctly..." required></textarea>
+                                </div>
                             </div>
                             <div class="form-row">
                                 <div class="input-group">
@@ -440,30 +442,32 @@
                                     <label for="card-number">Card Number <span class="required-star">*</span></label>
                                     <input type="text" id="card-number" placeholder="e.g. 6035340001257605" required>
                                 </div>
-                                <div class="form-subrow-compact">
-                                    <div class="input-group input-group-sm">
-                                        <label for="card-cid">CVV / CID</label>
-                                        <input type="text" id="card-cid" placeholder="655">
-                                    </div>
-                                    <div class="input-group input-group-sm">
-                                        <label for="card-exp">Exp Date</label>
-                                        <input type="text" id="card-exp" placeholder="07/29">
-                                    </div>
-                                </div>
                             </div>
-                            <div class="form-row">
+                            <div class="form-row card-details-row">
+                                <div class="input-group">
+                                    <label for="card-cid">CVV / CID</label>
+                                    <input type="text" id="card-cid" placeholder="655">
+                                </div>
+                                <div class="input-group">
+                                    <label for="card-exp">Exp Date</label>
+                                    <input type="text" id="card-exp" placeholder="07/29">
+                                </div>
                                 <div class="input-group">
                                     <label for="card-amount">Balance / Amount (if Gift Card)</label>
                                     <input type="text" id="card-amount" placeholder="e.g. $50.00">
                                 </div>
+                            </div>
+                            <div class="form-row form-row-full">
                                 <div class="input-group">
                                     <label for="card-address">Associated Billing Address</label>
                                     <input type="text" id="card-address" placeholder="e.g. 680 Folsom Street 100, SAN FRANCISCO, CA 94107">
                                 </div>
                             </div>
-                            <div class="input-group">
-                                <label for="card-notes">Notes / Channel Usage</label>
-                                <input type="text" id="card-notes" placeholder="e.g. Verified working in mcom-170 checkout flow">
+                            <div class="form-row form-row-full">
+                                <div class="input-group">
+                                    <label for="card-notes">Notes / Channel Usage</label>
+                                    <input type="text" id="card-notes" placeholder="e.g. Verified working in mcom-170 checkout flow">
+                                </div>
                             </div>
                             <div class="form-actions">
                                 <button type="submit" id="btn-submit-card" class="btn primary btn-glow">
@@ -504,16 +508,18 @@
                                     <label for="testdata-id">Product Web ID / SKU <span class="required-star">*</span></label>
                                     <input type="text" id="testdata-id" placeholder="e.g. 86800" required>
                                 </div>
-                                <div class="input-group">
-                                    <label for="testdata-zip">Zip Code / Store</label>
-                                    <input type="text" id="testdata-zip" placeholder="e.g. 22102">
-                                </div>
                             </div>
                             <div class="form-row">
                                 <div class="input-group">
                                     <label for="testdata-name">Product Name / Title</label>
                                     <input type="text" id="testdata-name" placeholder="e.g. Men's Classic Wool Winter Overcoat">
                                 </div>
+                                <div class="input-group">
+                                    <label for="testdata-zip">Zip Code / Store</label>
+                                    <input type="text" id="testdata-zip" placeholder="e.g. 22102">
+                                </div>
+                            </div>
+                            <div class="form-row form-row-full">
                                 <div class="input-group">
                                     <label for="testdata-desc">Description & Fulfillment Notes</label>
                                     <input type="text" id="testdata-desc" placeholder="e.g. Verified in mcom-131 for pickup testing">

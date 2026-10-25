@@ -1093,13 +1093,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render Typing Indicator
     function appendTypingIndicator() {
         const row = document.createElement('div');
-        row.className = 'message-row agent';
+        row.className = 'message-row agent typing-row';
         row.innerHTML = `
             <div class="avatar"><i class="fa-solid fa-robot"></i></div>
             <div class="message-content">
-                <div class="bubble" style="display: flex; gap: 6px; align-items: center;">
-                    <span>Thinking</span>
-                    <span class="dot connecting"></span>
+                <div class="bubble typing-indicator-bubble">
+                    <span class="typing-text">Thinking</span>
+                    <span class="typing-dots">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </span>
                 </div>
             </div>
         `;
