@@ -875,7 +875,7 @@ Document Content:
 """
         try:
             resp = client.models.generate_content(
-                model="gemini-flash-lite-latest",
+                model="gemini-3.1-flash-lite",
                 contents=prompt
             )
             raw = (resp.text or "").strip()
