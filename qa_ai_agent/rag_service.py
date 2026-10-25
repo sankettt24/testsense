@@ -8,6 +8,7 @@ import shutil
 import logging
 from typing import List, Dict, Any, Optional
 import chromadb
+from chromadb.config import Settings
 from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
 
 logger = logging.getLogger("TestSenseAI_RAG")
@@ -30,8 +31,31 @@ if not os.environ.get("GOOGLE_API_KEY"):
                         if key_str and not os.environ.get(key_str):
                             os.environ[key_str] = val_str
 
+def _detect_readonly_filesystem() -> bool:
+    """Detects if we are running in a serverless or read-only container environment (e.g. Vercel, AWS Lambda)."""
+    serverless_envs = [
+        "VERCEL", "VERCEL_ENV", "VERCEL_URL", "NOW_REGION",
+        "AWS_LAMBDA_FUNCTION_NAME", "LAMBDA_TASK_ROOT", "LAMBDA_RUNTIME_DIR",
+        "K_SERVICE", "GAE_ENV"
+    ]
+    if any(os.environ.get(k) for k in serverless_envs):
+        return True
+    
+    current_abs = os.path.abspath(__file__)
+    if current_abs.startswith("/var/task") or current_abs.startswith("/tmp"):
+        return True
+    
+    try:
+        test_file = os.path.join(os.path.dirname(__file__), f".write_test_{os.getpid()}")
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+        return False
+    except (OSError, PermissionError):
+        return True
+
 # Persistent ChromaDB Directory (Detect Vercel / AWS Lambda serverless read-only filesystem)
-is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("NOW_REGION"))
+is_serverless = _detect_readonly_filesystem()
 
 if os.environ.get("CHROMA_DB_DIR"):
     CHROMA_DB_DIR = os.environ.get("CHROMA_DB_DIR")
@@ -324,26 +348,63 @@ class RAGVectorStore:
                 os.makedirs(self.chroma_dir, exist_ok=True)
                 if not os.listdir(self.chroma_dir):
                     logger.info(f"Copying pre-seeded ChromaDB from {local_repo_chroma} to writable {self.chroma_dir}...")
-                    shutil.copytree(local_repo_chroma, self.chroma_dir, dirs_exist_ok=True)
+                    for root, dirs, files in os.walk(local_repo_chroma):
+                        rel_dir = os.path.relpath(root, local_repo_chroma)
+                        dest_dir = os.path.join(self.chroma_dir, rel_dir) if rel_dir != "." else self.chroma_dir
+                        os.makedirs(dest_dir, exist_ok=True)
+                        for file in files:
+                            src_file = os.path.join(root, file)
+                            dest_file = os.path.join(dest_dir, file)
+                            shutil.copyfile(src_file, dest_file)
+                            try:
+                                os.chmod(dest_file, 0o666)
+                            except Exception:
+                                pass
             except Exception as copy_err:
                 logger.warning(f"Could not copy local chroma_db to {self.chroma_dir}: {copy_err}")
 
         # Initialize Chroma Client with graceful fallback for serverless read-only environments
         self.embedding_fn = GeminiChromaEmbeddingFunction()
+        client_initialized = False
+
+        # Attempt 1: PersistentClient with telemetry disabled to prevent read-only directory writes
         try:
             os.makedirs(self.chroma_dir, exist_ok=True)
-            self.client = chromadb.PersistentClient(path=self.chroma_dir)
+            chroma_settings = Settings(
+                anonymized_telemetry=False,
+                is_persistent=True,
+                persist_directory=self.chroma_dir,
+                allow_reset=True
+            )
+            self.client = chromadb.PersistentClient(path=self.chroma_dir, settings=chroma_settings)
+            self.collection = self.client.get_or_create_collection(
+                name="qa_knowledge_base",
+                embedding_function=self.embedding_fn,
+                metadata={"hnsw:space": "cosine"}
+            )
+            client_initialized = True
             logger.info(f"Initialized ChromaDB PersistentClient at {self.chroma_dir}")
         except Exception as pe:
             logger.warning(f"Could not initialize PersistentClient at {self.chroma_dir} ({pe}). Falling back to chromadb.EphemeralClient() for read-only serverless environment.")
-            self.client = chromadb.EphemeralClient()
 
-        self.collection = self.client.get_or_create_collection(
-            name="qa_knowledge_base",
-            embedding_function=self.embedding_fn,
-            metadata={"hnsw:space": "cosine"}
-        )
-        
+        # Attempt 2: Fallback to pure in-memory EphemeralClient
+        if not client_initialized:
+            try:
+                ephemeral_settings = Settings(
+                    anonymized_telemetry=False,
+                    is_persistent=False
+                )
+                self.client = chromadb.EphemeralClient(settings=ephemeral_settings)
+                self.collection = self.client.get_or_create_collection(
+                    name="qa_knowledge_base",
+                    embedding_function=self.embedding_fn,
+                    metadata={"hnsw:space": "cosine"}
+                )
+                logger.info("Successfully initialized in-memory ChromaDB EphemeralClient.")
+            except Exception as ee:
+                logger.error(f"Critical error initializing ChromaDB EphemeralClient: {ee}")
+                raise
+
         count = self.collection.count()
         logger.info(f"Initialized ChromaDB vector store. Current document count: {count}")
         

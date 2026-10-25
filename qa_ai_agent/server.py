@@ -78,8 +78,31 @@ try:
 except Exception as e:
     logger.warning(f"InMemorySessionService import notice: {e}")
 
+def _detect_readonly_filesystem() -> bool:
+    """Detects if we are running in a serverless or read-only container environment (e.g. Vercel, AWS Lambda)."""
+    serverless_envs = [
+        "VERCEL", "VERCEL_ENV", "VERCEL_URL", "NOW_REGION",
+        "AWS_LAMBDA_FUNCTION_NAME", "LAMBDA_TASK_ROOT", "LAMBDA_RUNTIME_DIR",
+        "K_SERVICE", "GAE_ENV"
+    ]
+    if any(os.environ.get(k) for k in serverless_envs):
+        return True
+    
+    current_abs = os.path.abspath(__file__)
+    if current_abs.startswith("/var/task") or current_abs.startswith("/tmp"):
+        return True
+    
+    try:
+        test_file = os.path.join(os.path.dirname(__file__), f".write_test_{os.getpid()}")
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+        return False
+    except (OSError, PermissionError):
+        return True
+
 # Persistent storage file for sessions (Detect Vercel / AWS Lambda serverless read-only filesystem)
-is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("NOW_REGION"))
+is_serverless = _detect_readonly_filesystem()
 DEFAULT_SESSIONS_FILE = os.path.join(os.path.dirname(__file__), "sessions_store.json")
 SESSIONS_FILE = "/tmp/sessions_store.json" if is_serverless else DEFAULT_SESSIONS_FILE
 
