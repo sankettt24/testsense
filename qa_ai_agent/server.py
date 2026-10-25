@@ -78,10 +78,13 @@ try:
 except Exception as e:
     logger.warning(f"InMemorySessionService import notice: {e}")
 
-# Persistent storage file for sessions
-SESSIONS_FILE = os.path.join(os.path.dirname(__file__), "sessions_store.json")
+# Persistent storage file for sessions (Detect Vercel / AWS Lambda serverless read-only filesystem)
+is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("NOW_REGION"))
+DEFAULT_SESSIONS_FILE = os.path.join(os.path.dirname(__file__), "sessions_store.json")
+SESSIONS_FILE = "/tmp/sessions_store.json" if is_serverless else DEFAULT_SESSIONS_FILE
 
 def load_sessions_db() -> Dict[str, Dict[str, Any]]:
+    # In serverless environments, check writable /tmp file first
     if os.path.exists(SESSIONS_FILE):
         try:
             with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
@@ -90,6 +93,17 @@ def load_sessions_db() -> Dict[str, Dict[str, Any]]:
                     return data
         except Exception as e:
             logger.warning(f"Failed to load sessions from {SESSIONS_FILE}: {e}")
+
+    # Fall back to repository default sessions if available
+    if os.path.exists(DEFAULT_SESSIONS_FILE):
+        try:
+            with open(DEFAULT_SESSIONS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception as e:
+            logger.warning(f"Failed to load default sessions from {DEFAULT_SESSIONS_FILE}: {e}")
+
     return {}
 
 def save_sessions_db():

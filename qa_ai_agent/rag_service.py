@@ -4,6 +4,7 @@ import json
 import uuid
 import time
 import math
+import shutil
 import logging
 from typing import List, Dict, Any, Optional
 import chromadb
@@ -29,8 +30,16 @@ if not os.environ.get("GOOGLE_API_KEY"):
                         if key_str and not os.environ.get(key_str):
                             os.environ[key_str] = val_str
 
-# Persistent ChromaDB Directory and legacy JSON backup path
-CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
+# Persistent ChromaDB Directory (Detect Vercel / AWS Lambda serverless read-only filesystem)
+is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("NOW_REGION"))
+
+if os.environ.get("CHROMA_DB_DIR"):
+    CHROMA_DB_DIR = os.environ.get("CHROMA_DB_DIR")
+elif is_serverless:
+    CHROMA_DB_DIR = "/tmp/chroma_db"
+else:
+    CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
+
 VECTOR_STORE_FILE = os.path.join(os.path.dirname(__file__), "rag_vector_store.json")
 
 # Lazy-loaded GenAI Client for embeddings
@@ -308,9 +317,27 @@ class RAGVectorStore:
         self.chroma_dir = chroma_dir
         self.legacy_json_file = legacy_json_file
         
-        # Initialize Persistent Chroma Client
-        self.client = chromadb.PersistentClient(path=self.chroma_dir)
+        # If in serverless environment (/tmp/chroma_db), copy pre-seeded repo chroma_db if available
+        local_repo_chroma = os.path.join(os.path.dirname(__file__), "chroma_db")
+        if self.chroma_dir != local_repo_chroma and os.path.exists(local_repo_chroma):
+            try:
+                os.makedirs(self.chroma_dir, exist_ok=True)
+                if not os.listdir(self.chroma_dir):
+                    logger.info(f"Copying pre-seeded ChromaDB from {local_repo_chroma} to writable {self.chroma_dir}...")
+                    shutil.copytree(local_repo_chroma, self.chroma_dir, dirs_exist_ok=True)
+            except Exception as copy_err:
+                logger.warning(f"Could not copy local chroma_db to {self.chroma_dir}: {copy_err}")
+
+        # Initialize Chroma Client with graceful fallback for serverless read-only environments
         self.embedding_fn = GeminiChromaEmbeddingFunction()
+        try:
+            os.makedirs(self.chroma_dir, exist_ok=True)
+            self.client = chromadb.PersistentClient(path=self.chroma_dir)
+            logger.info(f"Initialized ChromaDB PersistentClient at {self.chroma_dir}")
+        except Exception as pe:
+            logger.warning(f"Could not initialize PersistentClient at {self.chroma_dir} ({pe}). Falling back to chromadb.EphemeralClient() for read-only serverless environment.")
+            self.client = chromadb.EphemeralClient()
+
         self.collection = self.client.get_or_create_collection(
             name="qa_knowledge_base",
             embedding_function=self.embedding_fn,
@@ -318,7 +345,7 @@ class RAGVectorStore:
         )
         
         count = self.collection.count()
-        logger.info(f"Initialized ChromaDB vector store at {self.chroma_dir}. Current document count: {count}")
+        logger.info(f"Initialized ChromaDB vector store. Current document count: {count}")
         
         if count == 0:
             if os.path.exists(self.legacy_json_file):
