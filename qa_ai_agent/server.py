@@ -1,9 +1,20 @@
 import os
+import ssl
 import uuid
 import json
 import base64
 import logging
 import inspect
+import time
+
+# SSL verification patch for corporate proxy environments
+ssl._create_default_https_context = ssl._create_unverified_context
+try:
+    import aiohttp.connector
+    aiohttp.connector.TCPConnector._get_ssl_context = lambda self, req: getattr(aiohttp.connector, '_SSL_CONTEXT_UNVERIFIED', None)
+except Exception:
+    pass
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -67,8 +78,29 @@ try:
 except Exception as e:
     logger.warning(f"InMemorySessionService import notice: {e}")
 
-# In-memory sessions store for ADK compatibility
-SESSIONS_DB: Dict[str, Dict[str, Any]] = {}
+# Persistent storage file for sessions
+SESSIONS_FILE = os.path.join(os.path.dirname(__file__), "sessions_store.json")
+
+def load_sessions_db() -> Dict[str, Dict[str, Any]]:
+    if os.path.exists(SESSIONS_FILE):
+        try:
+            with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception as e:
+            logger.warning(f"Failed to load sessions from {SESSIONS_FILE}: {e}")
+    return {}
+
+def save_sessions_db():
+    try:
+        with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump(SESSIONS_DB, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to save sessions to {SESSIONS_FILE}: {e}")
+
+# In-memory sessions store with file backup
+SESSIONS_DB: Dict[str, Dict[str, Any]] = load_sessions_db()
 
 def safe_json_convert(obj: Any) -> Any:
     """Recursively converts objects to JSON-safe structures, preventing UnicodeDecodeError on raw bytes."""
@@ -121,29 +153,62 @@ async def _ensure_session_registered(app_name: str, user_id: str, session_id: st
         logger.debug(f"Session register helper notice: {err}")
 
 @app.get("/")
-def health_check():
+def health_check(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/app/")
     return {
         "status": "online",
         "agent": root_agent.name,
         "description": root_agent.description,
         "framework": "Google ADK (Agent Development Kit)",
         "web_ui": "/app",
-        "api_key_configured": bool(os.environ.get("GOOGLE_API_KEY"))
+        "api_key_configured": bool(os.environ.get("GOOGLE_API_KEY")),
+        "sessions_count": len(SESSIONS_DB)
     }
+
+class SessionCreateRequest(BaseModel):
+    sessionId: Optional[str] = None
+    title: Optional[str] = "New Chat"
+
+# ADK Session List Endpoint for a User
+@app.get("/apps/{app_name}/users/{user_id}/sessions")
+async def list_adk_sessions(app_name: str, user_id: str):
+    user_sessions = []
+    for sid, sdata in SESSIONS_DB.items():
+        if sdata.get("userId") == user_id and sdata.get("appName") == app_name:
+            user_sessions.append(sdata)
+    
+    # Sort newest first
+    user_sessions.sort(key=lambda s: s.get("updatedAt", s.get("createdAt", 0)), reverse=True)
+    return {"sessions": user_sessions}
 
 # ADK Session Creation Endpoint
 @app.post("/apps/{app_name}/users/{user_id}/sessions")
-async def create_adk_session(app_name: str, user_id: str):
-    session_id = str(uuid.uuid4())
+async def create_adk_session(app_name: str, user_id: str, request_data: Optional[SessionCreateRequest] = None):
+    session_id = (request_data.sessionId if request_data and request_data.sessionId else None) or str(uuid.uuid4())
+    title = (request_data.title if request_data and request_data.title else None) or "New Chat"
     await _ensure_session_registered(app_name, user_id, session_id)
     
-    SESSIONS_DB[session_id] = {
-        "id": session_id,
-        "appName": app_name,
-        "userId": user_id,
-        "state": {},
-        "events": []
-    }
+    now = time.time()
+    if session_id not in SESSIONS_DB:
+        SESSIONS_DB[session_id] = {
+            "id": session_id,
+            "appName": app_name,
+            "userId": user_id,
+            "title": title,
+            "createdAt": now,
+            "updatedAt": now,
+            "state": {},
+            "events": []
+        }
+    else:
+        if title and title != "New Chat":
+            SESSIONS_DB[session_id]["title"] = title
+        SESSIONS_DB[session_id]["updatedAt"] = now
+
+    save_sessions_db()
     return SESSIONS_DB[session_id]
 
 # ADK Session Get Endpoint
@@ -151,8 +216,34 @@ async def create_adk_session(app_name: str, user_id: str):
 async def get_adk_session(app_name: str, user_id: str, session_id: str):
     await _ensure_session_registered(app_name, user_id, session_id)
     if session_id not in SESSIONS_DB:
-        return {"id": session_id, "appName": app_name, "userId": user_id}
+        now = time.time()
+        SESSIONS_DB[session_id] = {
+            "id": session_id,
+            "appName": app_name,
+            "userId": user_id,
+            "title": f"Chat {session_id[:8]}",
+            "createdAt": now,
+            "updatedAt": now,
+            "state": {},
+            "events": []
+        }
+        save_sessions_db()
     return SESSIONS_DB[session_id]
+
+# ADK Session Delete Endpoint
+@app.delete("/apps/{app_name}/users/{user_id}/sessions/{session_id}")
+async def delete_adk_session(app_name: str, user_id: str, session_id: str):
+    if SESSION_SERVICE:
+        try:
+            res = SESSION_SERVICE.delete_session(app_name=app_name, user_id=user_id, session_id=session_id)
+            if inspect.isawaitable(res):
+                await res
+        except Exception as e:
+            logger.debug(f"SESSION_SERVICE delete notice: {e}")
+    if session_id in SESSIONS_DB:
+        del SESSIONS_DB[session_id]
+        save_sessions_db()
+    return {"status": "deleted", "id": session_id}
 
 # Models for /run endpoint
 class PartModel(BaseModel):
@@ -179,6 +270,35 @@ async def run_agent(request: RunAgentRequest):
 
     target_app = request.appName or "multi_tool_agent"
     await _ensure_session_registered(target_app, request.userId, request.sessionId)
+
+    now = time.time()
+    if request.sessionId not in SESSIONS_DB:
+        SESSIONS_DB[request.sessionId] = {
+            "id": request.sessionId,
+            "appName": target_app,
+            "userId": request.userId,
+            "title": (prompt_text[:35] + "...") if len(prompt_text) > 35 else prompt_text,
+            "createdAt": now,
+            "updatedAt": now,
+            "state": {},
+            "events": []
+        }
+    else:
+        # Auto-update title if it is default "New Chat"
+        if SESSIONS_DB[request.sessionId].get("title") in ("New Chat", None, ""):
+            SESSIONS_DB[request.sessionId]["title"] = (prompt_text[:35] + "...") if len(prompt_text) > 35 else prompt_text
+        SESSIONS_DB[request.sessionId]["updatedAt"] = now
+
+    # Record user message event in session history
+    user_event = {
+        "content": {
+            "role": "user",
+            "parts": [{"text": prompt_text}]
+        },
+        "author": request.userId,
+        "timestamp": now
+    }
+    SESSIONS_DB[request.sessionId].setdefault("events", []).append(user_event)
 
     events_list = []
     try:
@@ -238,25 +358,30 @@ async def run_agent(request: RunAgentRequest):
     serialized = [safe_json_convert(ev) for ev in events_list]
     serialized = [s for s in serialized if s]
 
-    if serialized:
-        return serialized
+    if not serialized:
+        serialized = [
+            {
+                "modelVersion": "gemini-3.1-flash-lite",
+                "content": {
+                    "role": "model",
+                    "parts": [
+                        {
+                            "text": f"Agent {root_agent.name} received: '{prompt_text}'."
+                        }
+                    ]
+                },
+                "finishReason": "STOP",
+                "author": root_agent.name
+            }
+        ]
 
-    # Return standard formatted fallback event if runner list is empty
-    return [
-        {
-            "modelVersion": "gemini-3.1-flash-lite",
-            "content": {
-                "role": "model",
-                "parts": [
-                    {
-                        "text": f"Agent {root_agent.name} received: '{prompt_text}'."
-                    }
-                ]
-            },
-            "finishReason": "STOP",
-            "author": root_agent.name
-        }
-    ]
+    # Append response events to session history and persist
+    for ev in serialized:
+        SESSIONS_DB[request.sessionId]["events"].append(ev)
+    SESSIONS_DB[request.sessionId]["updatedAt"] = time.time()
+    save_sessions_db()
+
+    return serialized
 
 # Simplified REST Chat Endpoint
 class ChatRequest(BaseModel):

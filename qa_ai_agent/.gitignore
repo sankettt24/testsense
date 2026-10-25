@@ -41,3 +41,7 @@ yarn-error.log*
 dist/
 build/
 *.egg-info/
+
+# Google ADK local cache
+.adk/
+*.db

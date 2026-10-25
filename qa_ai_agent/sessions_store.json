@@ -1,0 +1,623 @@
+{
+  "e4e157f0-b295-43a9-bc35-8b38c2738624": {
+    "id": "e4e157f0-b295-43a9-bc35-8b38c2738624",
+    "appName": "multi_tool_agent",
+    "userId": "tester",
+    "title": "SSL Test",
+    "createdAt": 1792912406.18805,
+    "updatedAt": 1792912417.739639,
+    "state": {},
+    "events": [
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Reply with the word SUCCESS only."
+            }
+          ]
+        },
+        "author": "tester",
+        "timestamp": 1792912406.192939
+      },
+      {
+        "model_version": null,
+        "content": null,
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": null,
+        "error_code": "ClientConnectorCertificateError",
+        "error_message": "Cannot connect to host generativelanguage.googleapis.com:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1082)')]",
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": null,
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-a223621a-5bb2-4053-b0eb-6b305b753898",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "6cb07e1e-a0fd-4d91-b196-226f8edb109b",
+        "timestamp": 1792912417.7218251
+      }
+    ]
+  },
+  "aebeae0b-4f7c-4d0f-a955-9532c9a05d66": {
+    "id": "aebeae0b-4f7c-4d0f-a955-9532c9a05d66",
+    "appName": "multi_tool_agent",
+    "userId": "tester",
+    "title": "SSL Test",
+    "createdAt": 1792912502.571882,
+    "updatedAt": 1792912510.107775,
+    "state": {},
+    "events": [
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Say hello in 3 words"
+            }
+          ]
+        },
+        "author": "tester",
+        "timestamp": 1792912502.574367
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "Hello! How's it?",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0Tf_F5wV8HlDIw8ZKXqWDiJ15L8IOAUDYWKRnIIXq14VnTkGvy7sItjaW4w6OUsdSHQa71EDDGcbjhbZGlVUkdM0GW4AgGkE110KPxvwjnT9uQ9JGBcmKMONVBp8J5sAeFPb-GQ8Rlxys-Hqas",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 7,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 2476,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 2476
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 2483,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-659d5559-0e43-4221-8b10-2041361a9cd6",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "25d1d6a2-071d-451a-a780-49e34900559f",
+        "timestamp": 1792912502.8295412
+      }
+    ]
+  },
+  "3c52564b-089b-4354-a8cc-e25c3305fc28": {
+    "id": "3c52564b-089b-4354-a8cc-e25c3305fc28",
+    "appName": "multi_tool_agent",
+    "userId": "qa_tester_1",
+    "title": "can you give me macys card",
+    "createdAt": 1792912815.1780689,
+    "updatedAt": 1792912874.7865112,
+    "state": {},
+    "events": [
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "can you give me macys card"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792912861.2001011
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": {
+                "id": "call_1708263",
+                "args": {
+                  "category": "MACYS CARDS"
+                },
+                "name": "fetch_qa_test_data",
+                "partial_args": null,
+                "will_continue": null
+              },
+              "function_response": null,
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0TMr8TVGuqSbaRcpqxuq69rUMT_rcKv1GpVtsw4KT0vwY-9azfvLA3O0_EixBmwh5puciz9VrS4StvuV2Ic5OeF3lW5gJ53fLT1WKO5vLIWEEAdX0KlCln2f6EigdOXkxeuIzEJXgBwe90IY0E",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 23,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 2477,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 2477
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 2500,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-214034b9-9c18-4258-9577-3a58708d1406",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": [],
+        "branch": null,
+        "isolation_scope": null,
+        "id": "496eb94b-c22a-4301-8876-8992f0af269f",
+        "timestamp": 1792912861.216723
+      },
+      {
+        "model_version": null,
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": {
+                "will_continue": null,
+                "scheduling": null,
+                "parts": null,
+                "id": "call_1708263",
+                "name": "fetch_qa_test_data",
+                "response": {
+                  "status": "success",
+                  "category": "MACYS CARDS",
+                  "data": [
+                    "Prop Gold: 6035340000050209 | CVV: 655 | Exp: 07/29 | Address: 680 Folsom Street 100, Apt 121, SAN FRANCISCO, CA 94107",
+                    "Prop Platinum: 6035340399633250 | CVV: 749 | Exp: 07/29 | Address: 680 FOLSOM STREET 100, SAN FRANCISCO, CA 94107",
+                    "Macy's Amex: 377481599274799 | Exp: February/2027 | CVV: 1903",
+                    "Macy's Amex BT: 377481406011913 | Exp: 01/2028 | CVV: 6653",
+                    "Working BT Macy's card: 6035340001224902",
+                    "Macy's card 2: 6035340000050266 / 100"
+                  ]
+                }
+              },
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": null,
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "user"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": null,
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": null,
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-214034b9-9c18-4258-9577-3a58708d1406",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "564f405d-f6ae-4a04-bac6-b4702e6d68bf",
+        "timestamp": 1792912869.207715
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "Here are the available Macy's card test data:\n\n*   **Prop Gold:** 6035340000050209 | CVV: 655 | Exp: 07/29\n*   **Prop Platinum:** 6035340399633250 | CVV: 749 | Exp: 07/29\n*   **Macy's Amex:** 377481599274799 | CVV: 1903 | Exp: 02/2027\n*   **Macy's Amex BT:** 377481406011913 | CVV: 6653 | Exp: 01/2028\n*   **Working BT Macy's card:** 6035340001224902\n*   **Macy's card 2:** 6035340000050266 (Security Code: 100)",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0THIC90RetQ8xAS6tF7J2OHb0-N5FzAKjnvWBMN6GGgrAL0Vea8c-tNxPSFMtj5GGiX9M1S8qfrdqW_YBFklOoI1AEKPNpH1emA1jm7B267IUaa6p_teeR46pinhg38ec00gwxhG7rgWF-a-6e",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 254,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 2818,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 2818
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 3072,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-214034b9-9c18-4258-9577-3a58708d1406",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "f184e288-c7bb-40da-90d0-f41abe4149af",
+        "timestamp": 1792912869.215679
+      }
+    ]
+  },
+  "c4526626-4235-4dc5-a3dc-564e9c8c5d23": {
+    "id": "c4526626-4235-4dc5-a3dc-564e9c8c5d23",
+    "appName": "multi_tool_agent",
+    "userId": "qa_tester_1",
+    "title": "what did i ask in the last chat",
+    "createdAt": 1792914266.6469738,
+    "updatedAt": 1792914318.696662,
+    "state": {},
+    "events": [
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "what did i ask in the last chat"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792914283.793697
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "I'm sorry, but I don't have access to your previous conversation history as each session starts fresh for your privacy and security. This is our first interaction in this chat. \n\nHow can I assist you with your QA tasks today? I can help with M/B-Money, mocking order fulfillments, fetching test data, or retrieving promotion details.",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0TtTOtjfBm0nSg--6KmU1VZIq0usietIRs8vSQpQ3CETojyYyZMqV55EUCiYZVkL46cPOmgynhcTwPmntaFe68sURn2BX-q8nDR89gPHF798XcD1mjPbZHxw9_YNTXqtejZDEhERjP1XoumHdk",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 74,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 2478,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 2478
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 2552,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-42fbf459-ef21-49ba-a4da-9dcbbf208983",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "0408d219-2ada-41be-9753-a682e0a11c2e",
+        "timestamp": 1792914283.816318
+      }
+    ]
+  }
+}

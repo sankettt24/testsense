@@ -1,35 +1,74 @@
 # Self-Learning QA Test Data AI Agent & Unified Platform
 
-Powered by the **Google ADK (Agent Development Kit)**, this Self-Learning QA AI Agent acts as an intelligent, central bridge between plain-English natural language requests from QA testers, developers, and product teams to automated backend Postman API endpoints and a shared test data knowledge base.
+Powered by the **Google ADK (Agent Development Kit)**, this Self-Learning QA AI Agent acts as an intelligent, central bridge between plain-English natural language requests from QA testers, developers, and product teams to automated backend API collections, CI/CD test pipelines, and a vector-embedded feature intelligence knowledge base.
 
 ---
 
-## 📌 Executive Summary
+## 📌 Executive Summary & Multi-Team Architecture
 
-Preparing test data for testing cycles (BOPS, LTL, GWP, etc.) traditionally takes **10–15 minutes per test cycle**. QA testers must manually search for Web IDs, locate valid sandbox cards, and hit multiple Postman endpoints to fund M-Money or Star Money balances.
+Preparing test data, executing BDV (Build Verification Testing), mocking order APIs, and triggering mobile automation across cloud devices traditionally takes **15–30 minutes per test cycle**. QA testers across multiple platform teams manually search for Web IDs, manage separate Postman collections, run log verifications, and trigger device tests.
 
-This **Self-Learning QA AI Agent** interprets simple plain-English requests, fetches product Web IDs and sandbox card data, and automatically triggers backend APIs (M-Money, Star Money, Tier Setup, SUPC Offer codes, Campaigns, etc.) in real time—reducing setup time to **<10 seconds**.
+This **Self-Learning QA AI Agent & Unified Platform** centralizes QA workflows across **MCOM (Site & App)** and **BCOM (Bloomingdale's)**, converting plain-English requests into automated API collection calls, extracting **Request IDs**, verifying logs against **Sentinel**, and orchestrating pipeline runs on **LambdaTest (~80 mobile devices)**—reducing setup and execution time to **<10 seconds**.
+
+### Platform & Team Breakdown
+
+```
+                         ┌─────────────────────────────────────────┐
+                         │   Unified QA Test Data & AI Platform    │
+                         └────────────────────┬────────────────────┘
+                                              │
+         ┌────────────────────────────────────┼────────────────────────────────────┐
+         ▼                                    ▼                                    ▼
+┌──────────────────┐                 ┌──────────────────┐                 ┌──────────────────┐
+│    MCOM Site     │                 │     MCOM App     │                 │  BCOM (Blooming) │
+├──────────────────┤                 ├──────────────────┤                 ├──────────────────┤
+│ • Shared Test    │                 │ • Shared Test    │                 │ • Isolated Test  │
+│   Data with App  │                 │   Data with Site │                 │   Data & Cards   │
+│ • MCOM API Coll. │                 │ • MCOM API Coll. │                 │ • BCOM API Coll. │
+│ • MCOM Order Mock│                 │ • MCOM Order Mock│                 │ • BCOM Order Mock│
+│ • Trans / Non-   │                 │ • Trans / Non-   │                 │ • Trans / Non-   │
+│   Trans BDV      │                 │   Trans BDV      │                 │   Trans BDV      │
+└──────────────────┘                 └──────────────────┘                 └──────────────────┘
+```
+
+* **MCOM Site & App Teams**: Share unified core test data (Web IDs, Sandbox Cards, Shipping/Billing Addresses, SUPC/PZO offers), with platform-specific execution targets.
+* **BCOM (Bloomingdale's) Team**: Uses isolated, BCOM-specific test data sets (B-Money, Bloomingdale's card credentials, BCOM PDP Web IDs, and distinct API collections).
 
 ---
 
-## ⚠️ Problem Statement
+## 💡 Key Platform Capabilities
 
-* **Time Loss**: Manual Postman execution for loyalty setup and test data creation is slow, repetitive, and error-prone.
-* **Scattered Data**: Web IDs (BOPS, Ship, LTL, WNM, etc.), sandbox card credentials, and test addresses are spread across static documents and spreadsheets.
-* **Stale Knowledge**: When new test products, sandbox cards, or features are created, there is no shared way to update the system instantly without redeploying code.
+### 1. Instant Multi-Brand Data Retrieval
+Automatically retrieves verified Sandbox Cards (Visa, Mastercard, Macy's Loyalty, Prop Gold, Prop Platinum, BCOM cards) and Web IDs for requested product categories (`SHIP`, `BOPS`, `BOSS`, `GWP`, `VGC`, `EGC`, `2 TIER`, `PWP`, `3P`, `BT`, `LTL`, `WNM`).
 
----
-
-## 💡 Solution & Key Features
-
-### 1. Instant Data Retrieval
-Automatically retrieves verified Sandbox Cards (Visa, Mastercard, Macy's Loyalty, Prop Gold, Prop Platinum) and Web IDs for requested product categories (BOPS, LTL, GWP, etc.).
-
-### 2. Automated API Execution
-Automatically executes backend API endpoints in real time:
+### 2. Automated API Collections & Order Mocking
+Executes real-time backend API endpoints and collection suites:
 * **M/BMoney Add**: Fund target email accounts (`/mbmoneycard/add`).
 * **Star Money Setup**: Load reward dollars onto loyalty cards (`/loyalty/setup`).
 * **SUPC Offers & Campaigns**: Add SUPC offer codes (`/offer/addOffers`) and configure campaigns (`/campaign/setup`).
+* **Order Mocking Collections**: Dedicated isolated collections for **BCOM** and **MCOM** to mock order creation, checkout validation, and payment processing payloads.
+
+### 3. BDV (Build Verification Testing) & Sentinel Log Verification
+Automates Build Verification Testing (BDV) workflows across transactional and non-transactional channels:
+* **Transactional (Trans) Collections**: Separate collections for BCOM Trans and MCOM Trans.
+* **Non-Transactional (Non-Trans) Collections**: Separate collections for BCOM Non-Trans and MCOM Non-Trans.
+* **Sentinel Log Verification**: The agent triggers the requested collection, extracts the returned **Request ID**, and automatically queries the **Sentinel Platform** to verify transaction logs and confirm build stability.
+
+### 4. Pipeline & LambdaTest Multi-Device Execution (~80 Devices)
+Direct natural language triggers for **GitLab CI/CD Pipelines** and **LambdaTest** execution across a shared pool of **~80 real devices**:
+* **Supported Mobile Teams**: **BCOM iOS**, **MCOM iOS**, **MCOM Android**.
+* **Workflow**: Parses target platform (`BCOM iOS`, `MCOM iOS`, `MCOM Android`), Git branch (`e.g. spatil`), environment (`e.g. mcom-170`), and device model to trigger automation suites seamlessly.
+
+**Example Pipeline Prompt:**
+> *"Trigger the BDV Trans pipeline for MCOM iOS using branch spatil in environment mcom-170 on LambdaTest"*
+
+### 5. Team-Level Feature Intelligence & Vector Ingestion Dashboard
+Centralized feature knowledge base covering **all platforms** (BCOM, MCOM Site, MCOM App):
+* **Historical Feature Repository**: Stores historical feature specs, visual assets (screenshots, video recordings), acceptance criteria (AC), and edge-case test scenarios.
+* **Team-Level Ingestion Dashboard**: Dedicated dashboard equipped with team-level access control and data management. 
+  - **MCOM Team**: Can add, update, or delete feature specs, ACs, and visual assets specifically for MCOM Site and App.
+  - **BCOM Team**: Can independently manage feature data specifically for BCOM.
+  - **Vector Chunking**: Converts uploaded feature specifications into optimal text chunks and vector embeddings stored in the vector database for fast, accurate natural language queries.
 
 **Example Prompts:**
 > *"I want to add M-Money in this account sanket123@gmail.com"*  
@@ -88,10 +127,10 @@ The agent incorporates multi-layered security guardrails directly into `agent.py
 
 ## 📈 Quantifiable Benefits
 
-* **Time Savings**: Reduces test data setup time from **15 minutes to <10 seconds**.
-* **Zero Execution Errors**: Eliminates manual payload entry errors in API testing.
-* **Always Up-to-Date Repository**: Centralized shared knowledge base accessible across all teams.
-* **Accelerated Test Cycles**: Improves QA productivity and overall sprint release speed.
+* **Time Savings**: Reduces test data setup and BDV log verification from **30 minutes to <10 seconds**.
+* **80-Device Orchestration**: Instant automated execution across LambdaTest device fleets for BCOM iOS, MCOM iOS, and MCOM Android.
+* **Sentinel Log Automation**: Automated Request ID extraction and Sentinel log verification.
+* **Team-Isolated Feature Intelligence**: Team-partitioned Vector Ingestion Dashboard for BCOM, MCOM Site, and MCOM App features.
 
 ---
 
@@ -171,7 +210,15 @@ adk run multi_tool_agent
 ```bash
 python3 server.py
 ```
-* Serves the REST API (`/run`, `/apps/.../sessions`) and interactive Web UI at `http://localhost:8000/app`.
+* Serves the REST API (`/run`, `/apps/.../sessions`) and interactive Web UI at `http://localhost:8000/app` (or `http://localhost:8000/`).
+
+### 4. Session Persistence & Multi-Chat History
+The platform includes built-in persistent session management:
+* **Refresh Resilience**: When users refresh the page, the active session and full chat history (messages, tool calls, execution outputs) are automatically restored without loss of context.
+* **Multi-Chat Switching**: Users can view all previous conversations in the sidebar's **Chat History** list, click any session to immediately switch between them, and resume context with the agent.
+* **Auto-Titled Sessions**: Sessions are automatically and smartly named based on the user's initial prompt.
+* **Session Lifecycle**: Easily start a fresh conversation with **+ New Chat** (available in the header and sidebar), copy the Session ID, or delete old sessions.
+* **Hybrid Storage**: Synchronized between browser `localStorage` and server-backed persistence (`sessions_store.json`), supporting multi-user isolation by User Identifier.
 
 ---
 

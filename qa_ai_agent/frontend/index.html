@@ -49,30 +49,61 @@
                 </button>
             </div>
 
-            <div class="sidebar-section">
-                <h3><i class="fa-solid fa-server"></i> Server Config</h3>
-                <div class="input-group">
-                    <label for="server-url">Server / Deployed API URL</label>
-                    <input type="text" id="server-url" value="" placeholder="Auto-detecting deployed URL...">
+            <!-- Primary New Chat Action Button -->
+            <button id="btn-sidebar-new-chat" class="btn-new-chat-primary" title="Start a fresh chat session">
+                <i class="fa-solid fa-plus"></i>
+                <span>New Chat</span>
+            </button>
+
+            <!-- Chat History / Saved Sessions Section -->
+            <div class="sidebar-section session-history-section">
+                <div class="section-header-title">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Chat History</h3>
+                    <span id="sessions-count-badge" class="badge-pill">0</span>
                 </div>
-                <div class="input-group">
-                    <label for="user-id">User Identifier</label>
-                    <input type="text" id="user-id" value="qa_tester_1" placeholder="qa_user">
+                <div class="sessions-list" id="sessions-list">
+                    <!-- Session cards dynamically rendered here -->
                 </div>
-                <button id="btn-new-session" class="btn secondary">
-                    <i class="fa-solid fa-rotate-right"></i> Start New Session
-                </button>
             </div>
 
+            <!-- Active Session Details -->
             <div class="sidebar-section session-info">
-                <h3><i class="fa-solid fa-key"></i> Active Session</h3>
-                <div class="session-card">
-                    <span class="session-label">Session ID:</span>
-                    <code id="session-id-display">Not Connected</code>
+                <div class="section-header-title">
+                    <h3><i class="fa-solid fa-satellite-dish"></i> Active Session</h3>
+                    <div class="status-indicator" id="status-indicator">
+                        <span class="dot disconnected"></span>
+                        <span id="status-text">Disconnected</span>
+                    </div>
                 </div>
-                <div class="status-indicator" id="status-indicator">
-                    <span class="dot disconnected"></span>
-                    <span id="status-text">Disconnected</span>
+                <div class="session-card">
+                    <div class="session-meta-row">
+                        <span class="session-label">Session ID</span>
+                        <button id="btn-copy-session" class="icon-subtle-btn" title="Copy Session ID">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                    <code id="session-id-display">Connecting...</code>
+                </div>
+            </div>
+
+            <!-- Server & User Configuration (Collapsible) -->
+            <div class="sidebar-section config-section">
+                <div class="config-header" id="config-toggle">
+                    <h3><i class="fa-solid fa-sliders"></i> Configuration</h3>
+                    <i class="fa-solid fa-chevron-down toggle-icon" id="config-arrow"></i>
+                </div>
+                <div class="config-body" id="config-body">
+                    <div class="input-group">
+                        <label for="server-url">Server / Deployed API URL</label>
+                        <input type="text" id="server-url" value="" placeholder="Auto-detecting deployed URL...">
+                    </div>
+                    <div class="input-group">
+                        <label for="user-id">User Identifier</label>
+                        <input type="text" id="user-id" value="qa_tester_1" placeholder="qa_user">
+                    </div>
+                    <button id="btn-new-session" class="btn secondary btn-sm" style="display: none;">
+                        <i class="fa-solid fa-rotate-right"></i> Force Reset Session
+                    </button>
                 </div>
             </div>
 
@@ -83,6 +114,7 @@
                     <li><i class="fa-solid fa-star"></i> <span>Star Money Rewards Setup</span></li>
                     <li><i class="fa-solid fa-tag"></i> <span>SUPC Offer Intelligence</span></li>
                     <li><i class="fa-solid fa-percent"></i> <span>PZO Offer Intelligence</span></li>
+                    <li><i class="fa-solid fa-truck-fast"></i> <span>Shipment Ref & SHPSHPD</span></li>
                     <li><i class="fa-solid fa-database"></i> <span>QA Knowledge Base Lookup</span></li>
                 </ul>
             </div>
@@ -105,12 +137,16 @@
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div class="header-title">
-                        <h1>TestSense AI Agent</h1>
-                        <p>QA Test Data & API Automation</p>
+                        <h1 id="chat-header-title">TestSense AI Agent</h1>
+                        <p id="chat-header-subtitle">QA Test Data & API Automation</p>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button id="btn-clear-chat" class="icon-button" title="Clear Chat Window">
+                    <button id="btn-header-new-chat" class="btn-header-new" title="Start New Chat">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New Chat</span>
+                    </button>
+                    <button id="btn-clear-chat" class="icon-button" title="Clear Current Chat">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
@@ -131,6 +167,12 @@
                     </button>
                     <button class="shortcut-btn" data-action="star_money">
                         <i class="fa-solid fa-star"></i> Star Money
+                    </button>
+                    <button class="shortcut-btn" data-action="shipment_ref">
+                        <i class="fa-solid fa-magnifying-glass-location"></i> Shipment Ref
+                    </button>
+                    <button class="shortcut-btn" data-action="shpshpd">
+                        <i class="fa-solid fa-truck-fast"></i> SHPSHPD Fulfillment
                     </button>
                     <button class="shortcut-btn" data-prompt="Fetch verified Sandbox Credit Cards test data">
                         <i class="fa-solid fa-credit-card"></i> Sandbox Cards
@@ -157,6 +199,24 @@
                     <p>Your Agent is ready. Tap any suggestion prompt below to fill the chat box:</p>
 
                     <div class="welcome-suggestions">
+                        <div class="suggestion-card" data-fill="Get shipment ref / reservation ID for customer order 1121612266">
+                            <div class="suggestion-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+                            <div class="suggestion-text">
+                                <strong>Get Shipment Ref (Reservation ID)</strong>
+                                <span>Lookup reservation ID from order details wrapper</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                        </div>
+
+                        <div class="suggestion-card" data-fill="Send BOPS SHPSHPD status update for order 1121612266">
+                            <div class="suggestion-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                            <div class="suggestion-text">
+                                <strong>SHPSHPD Fulfillment Status</strong>
+                                <span>Trigger BOPS/SDD/STH fulfillment update</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
+                        </div>
+
                         <div class="suggestion-card" data-fill="I want to add M-Money in this account sanket123@gmail.com">
                             <div class="suggestion-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
                             <div class="suggestion-text">
@@ -174,24 +234,6 @@
                             </div>
                             <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
                         </div>
-
-                        <div class="suggestion-card" data-fill="Fetch verified Sandbox Credit Cards test data">
-                            <div class="suggestion-icon"><i class="fa-solid fa-credit-card"></i></div>
-                            <div class="suggestion-text">
-                                <strong>Fetch Sandbox Cards</strong>
-                                <span>Retrieve Visa, Mastercard, Prop Gold & Amex</span>
-                            </div>
-                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
-                        </div>
-
-                        <div class="suggestion-card" data-fill="Fetch Web IDs for BOPS product category">
-                            <div class="suggestion-icon"><i class="fa-solid fa-box-archive"></i></div>
-                            <div class="suggestion-text">
-                                <strong>Fetch Web IDs for PDP</strong>
-                                <span>Get Web IDs for BOPS, LTL, GWP, and Ship</span>
-                            </div>
-                            <i class="fa-solid fa-arrow-up-left-from-square fill-icon"></i>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -199,7 +241,7 @@
             <!-- Input Box Container -->
             <div class="input-container">
                 <div class="input-wrapper">
-                    <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'Add M-Money for sanket123@gmail.com')..." rows="1"></textarea>
+                    <textarea id="user-input" placeholder="Ask TestSense AI (e.g. 'Get shipment ref for order 1121612266')..." rows="1"></textarea>
                     <button id="btn-send" class="btn primary" disabled>
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
