@@ -83,6 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'http://localhost:8000';
     }
 
+    // Helper: Get Current Active Server URL
+    function getServerUrl() {
+        if (serverUrlInput && serverUrlInput.value && serverUrlInput.value.trim()) {
+            return serverUrlInput.value.trim().replace(/\/$/, '');
+        }
+        return resolveInitialServerUrl();
+    }
+
     // Initialize Server URL Input Box
     const initialUrl = resolveInitialServerUrl();
     serverUrlInput.value = initialUrl;
@@ -1358,6 +1366,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardTypes = stats.card_types || {};
         const platforms = stats.platforms || {};
 
+        function resetTypeFilterToAll() {
+            currentKbFilter = 'all';
+            filterPills.forEach(p => {
+                p.classList.toggle('active', p.getAttribute('data-filter') === 'all');
+            });
+        }
+
         // 1. Add "Clear Tag Filter" chip if one is currently active
         if (currentCategoryTagFilter) {
             const clearTag = document.createElement('span');
@@ -1386,6 +1401,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     currentCategoryTagFilter = cat;
                     if (kbFilterInput) kbFilterInput.value = cat;
+                    resetTypeFilterToAll();
                 }
                 filterAndRenderDocuments();
                 renderContentBreakdown(stats);
@@ -1406,6 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     currentCategoryTagFilter = ctype;
                     if (kbFilterInput) kbFilterInput.value = ctype;
+                    resetTypeFilterToAll();
                 }
                 filterAndRenderDocuments();
                 renderContentBreakdown(stats);
@@ -1426,6 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     currentCategoryTagFilter = plat;
                     if (kbFilterInput) kbFilterInput.value = plat;
+                    resetTypeFilterToAll();
                 }
                 filterAndRenderDocuments();
                 renderContentBreakdown(stats);
@@ -1928,8 +1946,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render sessions list in sidebar
         renderSessionsList();
 
-        // Initial RAG Stats
+        // Initial RAG Stats & Documents Preload
         refreshRagStats();
+        loadRagDocuments();
 
         // Background server session synchronization
         syncServerSessions();
