@@ -332,6 +332,15 @@
                                 <h3 id="stat-testdata-count">21</h3>
                             </div>
                         </div>
+                        <div class="metric-card">
+                            <div class="metric-icon" style="background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                                <i class="fa-solid fa-file-lines"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Document Chunks</span>
+                                <h3 id="stat-documents-count">0</h3>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Ingestion Hub Section -->
@@ -356,6 +365,11 @@
                                     <i class="fa-solid fa-box-archive"></i>
                                     <span class="tab-label-full">Test Data / Web ID</span>
                                     <span class="tab-label-short">Test Data</span>
+                                </button>
+                                <button class="ingest-tab-btn" data-tab="document">
+                                    <i class="fa-solid fa-file-arrow-up"></i>
+                                    <span class="tab-label-full">Document Ingest</span>
+                                    <span class="tab-label-short">Document</span>
                                 </button>
                             </div>
                         </div>
@@ -541,6 +555,146 @@
                                 </button>
                             </div>
                         </form>
+
+                        <!-- Form 4: Document Ingestion Form (Text & LLM Semantic Chunking) -->
+                        <form id="form-ingest-document" class="ingest-form" style="display: none;">
+                            <div class="form-banner doc-banner">
+                                <i class="fa-solid fa-file-circle-check"></i>
+                                <span><strong>Interactive Document Ingestion:</strong> Upload <code>.txt</code> or <code>.md</code> files (or paste below). Select <strong>Text-Based Chunking</strong> (with custom chunk size & overlap) or <strong>LLM Semantic Chunking</strong> (Gemini AI with zero context loss). Review generated chunk previews and refine before ingesting into ChromaDB.</span>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="doc-title">Document Title / Reference <span class="required-star">*</span></label>
+                                    <input type="text" id="doc-title" placeholder="e.g. Macy's QA Test Card Data Repository" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Upload File (.txt, .md)</label>
+                                    <div class="file-upload-zone" id="file-drop-zone">
+                                        <input type="file" id="file-input-doc" accept=".txt,.md,.text" style="display: none;">
+                                        <div class="drop-zone-content" id="drop-zone-content">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <span id="drop-zone-text"><strong>Click to browse</strong> or drag & drop <code>.txt</code> / <code>.md</code></span>
+                                        </div>
+                                        <div class="drop-zone-loaded" id="drop-zone-loaded" style="display: none;">
+                                            <i class="fa-solid fa-file-lines"></i>
+                                            <span id="loaded-file-name">filename.txt</span>
+                                            <button type="button" id="btn-remove-file" class="btn-remove-file" title="Remove file"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row form-row-full">
+                                <div class="input-group">
+                                    <label for="doc-content">Document Content (Text or Markdown) <span class="required-star">*</span></label>
+                                    <textarea id="doc-content" rows="6" placeholder="Paste text or markdown content here, or upload a file above..." required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-row form-row-full">
+                                <div class="input-group">
+                                    <label>Chunking Strategy <span class="required-star">*</span></label>
+                                    <div class="chunk-strategy-grid">
+                                        <label class="strategy-card active" id="strategy-card-llm">
+                                            <input type="radio" name="chunk-strategy" value="llm" checked>
+                                            <div class="strategy-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                                            <div class="strategy-text">
+                                                <strong>LLM-Based Semantic Chunking (Gemini AI)</strong>
+                                                <span>Splits document into coherent, self-contained sections without ANY context loss, retaining parent headers, tables, and titles.</span>
+                                            </div>
+                                            <span class="strategy-badge badge-cyan">Recommended</span>
+                                        </label>
+                                        <label class="strategy-card" id="strategy-card-text">
+                                            <input type="radio" name="chunk-strategy" value="text">
+                                            <div class="strategy-icon"><i class="fa-solid fa-scissors"></i></div>
+                                            <div class="strategy-text">
+                                                <strong>Text-Based Chunking</strong>
+                                                <span>Sliding window chunking with customizable character chunk size and overlap size.</span>
+                                            </div>
+                                            <span class="strategy-badge badge-amber">Configurable</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Text-Based Parameters -->
+                            <div class="form-row" id="strategy-text-controls" style="display: none;">
+                                <div class="input-group">
+                                    <label for="chunk-size-input">Chunk Size (Characters)</label>
+                                    <div class="slider-with-input">
+                                        <input type="range" id="chunk-size-slider" min="150" max="2500" step="50" value="500">
+                                        <input type="number" id="chunk-size-input" min="150" max="2500" step="50" value="500">
+                                    </div>
+                                    <span class="input-hint">Target character length per chunk (default: 500)</span>
+                                </div>
+                                <div class="input-group">
+                                    <label for="chunk-overlap-input">Chunk Overlap (Characters)</label>
+                                    <div class="slider-with-input">
+                                        <input type="range" id="chunk-overlap-slider" min="0" max="400" step="10" value="50">
+                                        <input type="number" id="chunk-overlap-input" min="0" max="400" step="10" value="50">
+                                    </div>
+                                    <span class="input-hint">Character overlap between consecutive chunks to avoid cutting mid-sentence</span>
+                                </div>
+                            </div>
+
+                            <!-- LLM-Based Instructions -->
+                            <div class="form-row form-row-full" id="strategy-llm-controls">
+                                <div class="input-group">
+                                    <label for="llm-chunk-instructions">Optional Custom Instructions for Gemini Semantic Splitting</label>
+                                    <input type="text" id="llm-chunk-instructions" placeholder="e.g. 'Preserve all table rows together', 'Split cards into tier-specific chunks', 'Include document title in every chunk'">
+                                    <span class="input-hint">Leave blank to let Gemini automatically preserve complete context and headings</span>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" id="btn-generate-preview" class="btn primary btn-glow">
+                                    <i class="fa-solid fa-layer-group"></i> <span>Generate Chunk Preview</span>
+                                </button>
+                            </div>
+
+                            <!-- Interactive Chunks Preview Container -->
+                            <div id="chunks-preview-container" class="chunks-preview-container" style="display: none;">
+                                <div class="preview-header-bar">
+                                    <div class="preview-summary-meta">
+                                        <h4><i class="fa-solid fa-list-check"></i> Chunk Preview (<span id="preview-total-count">0</span> Chunks)</h4>
+                                        <span id="preview-meta-details" class="preview-meta-details">Strategy: LLM Semantic | Total Chars: 0</span>
+                                    </div>
+                                    <div class="preview-quick-actions">
+                                        <button type="button" id="btn-discard-preview" class="btn-subtle" title="Discard preview">
+                                            <i class="fa-solid fa-xmark"></i> Discard
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- LLM Refine / Re-chunk Bar -->
+                                <div id="llm-rechunk-bar" class="llm-rechunk-bar">
+                                    <div class="rechunk-input-wrap">
+                                        <i class="fa-solid fa-robot"></i>
+                                        <input type="text" id="llm-refine-instructions" placeholder="Need adjustments? Tell LLM how to refine chunks (e.g. 'Make chunks larger', 'Group by category')...">
+                                    </div>
+                                    <button type="button" id="btn-ask-llm-rechunk" class="btn secondary">
+                                        <i class="fa-solid fa-rotate"></i> <span>Ask LLM to Make Again</span>
+                                    </button>
+                                </div>
+
+                                <!-- Scrollable Chunks Preview List -->
+                                <div id="chunks-preview-list" class="chunks-preview-list">
+                                    <!-- Rendered dynamically by app.js -->
+                                </div>
+
+                                <!-- Confirmation Footer -->
+                                <div class="preview-confirmation-footer">
+                                    <div class="confirmation-info">
+                                        <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald);"></i>
+                                        <span>Review the chunks above. If satisfied, click continue to vectorize and ingest into ChromaDB.</span>
+                                    </div>
+                                    <button type="button" id="btn-confirm-ingest-chunks" class="btn primary btn-glow">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> <span>Continue to Ingest Chunks (<span id="btn-ingest-count-badge">0</span>)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
 
                     <!-- Semantic Vector Search Playground -->
@@ -573,6 +727,7 @@
                                     <button class="filter-pill" data-filter="feature">Features (<span id="count-filter-feature">3</span>)</button>
                                     <button class="filter-pill" data-filter="card">Cards (<span id="count-filter-card">19</span>)</button>
                                     <button class="filter-pill" data-filter="test_data">Test Data (<span id="count-filter-testdata">21</span>)</button>
+                                    <button class="filter-pill" data-filter="document">Documents (<span id="count-filter-document">0</span>)</button>
                                 </div>
                             </div>
 

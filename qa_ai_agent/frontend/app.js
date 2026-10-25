@@ -1251,12 +1251,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const statFeaturesCount = document.getElementById('stat-features-count');
     const statCardsCount = document.getElementById('stat-cards-count');
     const statTestdataCount = document.getElementById('stat-testdata-count');
+    const statDocumentsCount = document.getElementById('stat-documents-count');
 
     // Forms & Tabs
     const ingestTabBtns = document.querySelectorAll('.ingest-tab-btn');
     const formIngestFeature = document.getElementById('form-ingest-feature');
     const formIngestCard = document.getElementById('form-ingest-card');
     const formIngestTestdata = document.getElementById('form-ingest-testdata');
+    const formIngestDocument = document.getElementById('form-ingest-document');
 
     // Semantic Search Tester
     const testerSearchInput = document.getElementById('tester-search-input');
@@ -1271,6 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const countFilterFeature = document.getElementById('count-filter-feature');
     const countFilterCard = document.getElementById('count-filter-card');
     const countFilterTestdata = document.getElementById('count-filter-testdata');
+    const countFilterDocument = document.getElementById('count-filter-document');
 
     let currentKbFilter = 'all';
     let cachedDocuments = [];
@@ -1362,6 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (formIngestFeature) formIngestFeature.style.display = tab === 'feature' ? 'flex' : 'none';
             if (formIngestCard) formIngestCard.style.display = tab === 'card' ? 'flex' : 'none';
             if (formIngestTestdata) formIngestTestdata.style.display = tab === 'testdata' ? 'flex' : 'none';
+            if (formIngestDocument) formIngestDocument.style.display = tab === 'document' ? 'flex' : 'none';
         });
     });
 
@@ -1560,6 +1564,345 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ==============================================================================
+    // Document Ingestion Controller (File Upload, Text & LLM Chunking, Preview & Ingest)
+    // ==============================================================================
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const fileInputDoc = document.getElementById('file-input-doc');
+    const dropZoneContent = document.getElementById('drop-zone-content');
+    const dropZoneLoaded = document.getElementById('drop-zone-loaded');
+    const loadedFileName = document.getElementById('loaded-file-name');
+    const btnRemoveFile = document.getElementById('btn-remove-file');
+    const docTitle = document.getElementById('doc-title');
+    const docContent = document.getElementById('doc-content');
+
+    const strategyCardLlm = document.getElementById('strategy-card-llm');
+    const strategyCardText = document.getElementById('strategy-card-text');
+    const strategyTextControls = document.getElementById('strategy-text-controls');
+    const strategyLlmControls = document.getElementById('strategy-llm-controls');
+
+    const chunkSizeSlider = document.getElementById('chunk-size-slider');
+    const chunkSizeInput = document.getElementById('chunk-size-input');
+    const chunkOverlapSlider = document.getElementById('chunk-overlap-slider');
+    const chunkOverlapInput = document.getElementById('chunk-overlap-input');
+    const llmChunkInstructions = document.getElementById('llm-chunk-instructions');
+
+    const btnGeneratePreview = document.getElementById('btn-generate-preview');
+    const chunksPreviewContainer = document.getElementById('chunks-preview-container');
+    const previewTotalCount = document.getElementById('preview-total-count');
+    const previewMetaDetails = document.getElementById('preview-meta-details');
+    const btnDiscardPreview = document.getElementById('btn-discard-preview');
+
+    const llmRechunkBar = document.getElementById('llm-rechunk-bar');
+    const llmRefineInstructions = document.getElementById('llm-refine-instructions');
+    const btnAskLlmRechunk = document.getElementById('btn-ask-llm-rechunk');
+    const chunksPreviewList = document.getElementById('chunks-preview-list');
+    const btnConfirmIngestChunks = document.getElementById('btn-confirm-ingest-chunks');
+    const btnIngestCountBadge = document.getElementById('btn-ingest-count-badge');
+
+    let currentSelectedFile = null;
+    let currentPreviewChunks = [];
+    let currentStrategy = 'llm';
+
+    // File Drag & Drop + Browse
+    if (fileDropZone && fileInputDoc) {
+        fileDropZone.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-remove-file')) return;
+            fileInputDoc.click();
+        });
+
+        fileInputDoc.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleUploadedFile(e.target.files[0]);
+            }
+        });
+
+        fileDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.add('dragover');
+        });
+
+        fileDropZone.addEventListener('dragleave', () => {
+            fileDropZone.classList.remove('dragover');
+        });
+
+        fileDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleUploadedFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    if (btnRemoveFile) {
+        btnRemoveFile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearUploadedFile();
+        });
+    }
+
+    function handleUploadedFile(file) {
+        currentSelectedFile = file;
+        if (loadedFileName) loadedFileName.textContent = file.name;
+        if (dropZoneContent) dropZoneContent.style.display = 'none';
+        if (dropZoneLoaded) dropZoneLoaded.style.display = 'flex';
+
+        if (docTitle && (!docTitle.value || docTitle.value.trim() === '')) {
+            const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+            docTitle.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (docContent) {
+                docContent.value = event.target.result || '';
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function clearUploadedFile() {
+        currentSelectedFile = null;
+        if (fileInputDoc) fileInputDoc.value = '';
+        if (dropZoneContent) dropZoneContent.style.display = 'flex';
+        if (dropZoneLoaded) dropZoneLoaded.style.display = 'none';
+    }
+
+    // Strategy Switching
+    function setChunkStrategy(strategy) {
+        currentStrategy = strategy;
+        if (strategyCardLlm && strategyCardText) {
+            if (strategy === 'llm') {
+                strategyCardLlm.classList.add('active');
+                strategyCardText.classList.remove('active');
+                const radioLlm = strategyCardLlm.querySelector('input[type="radio"]');
+                if (radioLlm) radioLlm.checked = true;
+                if (strategyLlmControls) strategyLlmControls.style.display = 'flex';
+                if (strategyTextControls) strategyTextControls.style.display = 'none';
+                if (llmRechunkBar) llmRechunkBar.style.display = 'flex';
+            } else {
+                strategyCardText.classList.add('active');
+                strategyCardLlm.classList.remove('active');
+                const radioText = strategyCardText.querySelector('input[type="radio"]');
+                if (radioText) radioText.checked = true;
+                if (strategyLlmControls) strategyLlmControls.style.display = 'none';
+                if (strategyTextControls) strategyTextControls.style.display = 'grid';
+                if (llmRechunkBar) llmRechunkBar.style.display = 'none';
+            }
+        }
+    }
+
+    if (strategyCardLlm) {
+        strategyCardLlm.addEventListener('click', () => setChunkStrategy('llm'));
+    }
+    if (strategyCardText) {
+        strategyCardText.addEventListener('click', () => setChunkStrategy('text'));
+    }
+
+    // Two-Way Sync for Chunk Size & Overlap Sliders
+    if (chunkSizeSlider && chunkSizeInput) {
+        chunkSizeSlider.addEventListener('input', (e) => chunkSizeInput.value = e.target.value);
+        chunkSizeInput.addEventListener('input', (e) => chunkSizeSlider.value = e.target.value);
+    }
+    if (chunkOverlapSlider && chunkOverlapInput) {
+        chunkOverlapSlider.addEventListener('input', (e) => chunkOverlapInput.value = e.target.value);
+        chunkOverlapInput.addEventListener('input', (e) => chunkOverlapSlider.value = e.target.value);
+    }
+
+    // Generate Chunk Preview API Call
+    async function requestChunkPreview(customInstructions = null) {
+        const content = docContent ? docContent.value.trim() : '';
+        if (!content) {
+            showRagToast('Please enter document content or upload a file first.', 'error');
+            return;
+        }
+
+        const title = docTitle ? docTitle.value.trim() : 'Document';
+        const filename = currentSelectedFile ? currentSelectedFile.name : '';
+        const chunkSize = parseInt(chunkSizeInput ? chunkSizeInput.value : '500', 10) || 500;
+        const overlapSize = parseInt(chunkOverlapInput ? chunkOverlapInput.value : '50', 10) || 50;
+        const instructions = customInstructions !== null 
+            ? customInstructions 
+            : (llmChunkInstructions ? llmChunkInstructions.value.trim() : '');
+
+        const originalBtnHtml = btnGeneratePreview ? btnGeneratePreview.innerHTML : '';
+        if (btnGeneratePreview) {
+            btnGeneratePreview.disabled = true;
+            btnGeneratePreview.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Chunks...';
+        }
+
+        try {
+            const baseUrl = getServerUrl();
+            const res = await fetch(`${baseUrl}/api/rag/chunks/preview`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content,
+                    title,
+                    filename,
+                    strategy: currentStrategy,
+                    chunk_size: chunkSize,
+                    overlap_size: overlapSize,
+                    instructions
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.chunks) {
+                currentPreviewChunks = data.chunks;
+                renderChunkPreviews(data);
+                if (chunksPreviewContainer) {
+                    chunksPreviewContainer.style.display = 'flex';
+                    chunksPreviewContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                showRagToast(`Generated ${data.total_chunks} preview chunks!`);
+            } else {
+                showRagToast(data.detail || 'Failed to generate preview chunks', 'error');
+            }
+        } catch (err) {
+            console.error('Error generating preview chunks:', err);
+            showRagToast('Failed to reach RAG backend', 'error');
+        } finally {
+            if (btnGeneratePreview) {
+                btnGeneratePreview.disabled = false;
+                btnGeneratePreview.innerHTML = originalBtnHtml;
+            }
+        }
+    }
+
+    if (btnGeneratePreview) {
+        btnGeneratePreview.addEventListener('click', () => requestChunkPreview());
+    }
+
+    // Ask LLM to Make Again / Re-chunk Handler
+    if (btnAskLlmRechunk) {
+        btnAskLlmRechunk.addEventListener('click', async () => {
+            const refineText = llmRefineInstructions ? llmRefineInstructions.value.trim() : '';
+            const originalBtnHtml = btnAskLlmRechunk.innerHTML;
+            btnAskLlmRechunk.disabled = true;
+            btnAskLlmRechunk.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Re-chunking with LLM...';
+            try {
+                await requestChunkPreview(refineText);
+            } finally {
+                btnAskLlmRechunk.disabled = false;
+                btnAskLlmRechunk.innerHTML = originalBtnHtml;
+            }
+        });
+    }
+
+    // Discard Preview Handler
+    if (btnDiscardPreview) {
+        btnDiscardPreview.addEventListener('click', () => {
+            currentPreviewChunks = [];
+            if (chunksPreviewContainer) chunksPreviewContainer.style.display = 'none';
+            if (chunksPreviewList) chunksPreviewList.innerHTML = '';
+            showRagToast('Chunk preview discarded');
+        });
+    }
+
+    // Render Preview Cards
+    function renderChunkPreviews(previewData) {
+        if (!chunksPreviewList) return;
+        chunksPreviewList.innerHTML = '';
+
+        const chunks = previewData.chunks || [];
+        if (previewTotalCount) previewTotalCount.textContent = chunks.length;
+        if (btnIngestCountBadge) btnIngestCountBadge.textContent = chunks.length;
+
+        const stratLabel = previewData.strategy === 'llm' ? 'Gemini AI Semantic' : 'Text Sliding Window';
+        if (previewMetaDetails) {
+            previewMetaDetails.textContent = `Strategy: ${stratLabel} | Total Chars: ${previewData.total_chars.toLocaleString()} | Words: ${previewData.total_words.toLocaleString()}`;
+        }
+
+        if (llmRechunkBar) {
+            llmRechunkBar.style.display = previewData.strategy === 'llm' ? 'flex' : 'none';
+        }
+
+        chunks.forEach((chunk, idx) => {
+            const card = document.createElement('div');
+            card.className = 'chunk-preview-card';
+
+            let tagsHtml = '';
+            if (chunk.tags && Array.isArray(chunk.tags) && chunk.tags.length > 0) {
+                tagsHtml = `<div class="chunk-tags-row">${chunk.tags.map(t => `<span class="chunk-tag-pill">#${escapeHtml(t)}</span>`).join('')}</div>`;
+            }
+
+            card.innerHTML = `
+                <div class="chunk-card-header">
+                    <span class="chunk-badge">Chunk ${chunk.chunk_index || (idx + 1)} of ${previewData.total_chunks}</span>
+                    <span class="chunk-card-title" title="${escapeHtml(chunk.title)}">${escapeHtml(chunk.title)}</span>
+                    <span class="chunk-card-meta">${chunk.char_count} chars (${chunk.word_count} words)</span>
+                </div>
+                ${chunk.summary ? `<div class="chunk-summary-text">${escapeHtml(chunk.summary)}</div>` : ''}
+                ${tagsHtml}
+                <div class="chunk-text-box">${escapeHtml(chunk.text || '')}</div>
+            `;
+            chunksPreviewList.appendChild(card);
+        });
+    }
+
+    // Ingest Finalized Chunks into ChromaDB
+    if (btnConfirmIngestChunks) {
+        btnConfirmIngestChunks.addEventListener('click', async () => {
+            if (!currentPreviewChunks || currentPreviewChunks.length === 0) {
+                showRagToast('No preview chunks to ingest.', 'error');
+                return;
+            }
+
+            const docTitleVal = docTitle ? docTitle.value.trim() : 'Document';
+            const filenameVal = currentSelectedFile ? currentSelectedFile.name : '';
+            const originalBtnHtml = btnConfirmIngestChunks.innerHTML;
+
+            btnConfirmIngestChunks.disabled = true;
+            btnConfirmIngestChunks.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingesting into ChromaDB...';
+
+            try {
+                const baseUrl = getServerUrl();
+                const res = await fetch(`${baseUrl}/api/rag/chunks/ingest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chunks: currentPreviewChunks,
+                        document_title: docTitleVal,
+                        filename: filenameVal,
+                        strategy: currentStrategy
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showRagToast(`Successfully vectorized & ingested ${data.ingested_count} chunks into ChromaDB!`);
+                    
+                    // Reset Form & Preview Container
+                    if (formIngestDocument) formIngestDocument.reset();
+                    clearUploadedFile();
+                    currentPreviewChunks = [];
+                    if (chunksPreviewContainer) chunksPreviewContainer.style.display = 'none';
+                    if (chunksPreviewList) chunksPreviewList.innerHTML = '';
+                    if (llmRefineInstructions) llmRefineInstructions.value = '';
+
+                    // Reset filter to All and refresh ChromaDB views
+                    currentCategoryTagFilter = null;
+                    if (kbFilterInput) kbFilterInput.value = '';
+                    currentKbFilter = 'all';
+                    filterPills.forEach(p => p.classList.toggle('active', p.getAttribute('data-filter') === 'all'));
+
+                    await refreshRagStats();
+                    await loadRagDocuments();
+                } else {
+                    showRagToast(data.detail || 'Failed to ingest chunks', 'error');
+                }
+            } catch (err) {
+                console.error('Error confirming chunk ingestion:', err);
+                showRagToast('Failed to communicate with ChromaDB server', 'error');
+            } finally {
+                btnConfirmIngestChunks.disabled = false;
+                btnConfirmIngestChunks.innerHTML = originalBtnHtml;
+            }
+        });
+    }
+
     // Explorer & Multi-Select DOM Elements
     const breakdownTagsContainer = document.getElementById('breakdown-tags-container');
     const selectAllVisible = document.getElementById('select-all-visible');
@@ -1600,11 +1943,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (statFeaturesCount) statFeaturesCount.textContent = data.features_count ?? data.features ?? 0;
             if (statCardsCount) statCardsCount.textContent = data.cards_count ?? data.cards ?? 0;
             if (statTestdataCount) statTestdataCount.textContent = data.test_data_count ?? data.test_data ?? 0;
+            if (statDocumentsCount) statDocumentsCount.textContent = data.documents_count ?? data.documents ?? 0;
 
             if (countFilterAll) countFilterAll.textContent = data.total_vectors;
             if (countFilterFeature) countFilterFeature.textContent = data.features_count ?? data.features ?? 0;
             if (countFilterCard) countFilterCard.textContent = data.cards_count ?? data.cards ?? 0;
             if (countFilterTestdata) countFilterTestdata.textContent = data.test_data_count ?? data.test_data ?? 0;
+            if (countFilterDocument) countFilterDocument.textContent = data.documents_count ?? data.documents ?? 0;
 
             // Render "What kind of data is present in the Vector DB"
             renderContentBreakdown(data);
@@ -1847,9 +2192,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = kbFilterInput ? kbFilterInput.value.trim().toLowerCase() : '';
 
         return cachedDocuments.filter(doc => {
-            // 1. Entity type pill filter (all, feature, card, test_data)
-            if (currentKbFilter !== 'all' && doc.type !== currentKbFilter) {
-                return false;
+            // 1. Entity type pill filter (all, feature, card, test_data, document)
+            if (currentKbFilter !== 'all') {
+                if (currentKbFilter === 'document' && (doc.type === 'document' || doc.type === 'doc')) {
+                    // Match document type
+                } else if (doc.type !== currentKbFilter) {
+                    return false;
+                }
             }
 
             // 2. Specific category/card_type/platform tag breakdown filter
@@ -1962,6 +2311,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.card_type) tagsHtml += `<span class="kb-meta-tag">${escapeHtml(metadata.card_type)}</span>`;
         if (metadata.zip_code) tagsHtml += `<span class="kb-meta-tag">Zip: ${escapeHtml(metadata.zip_code)}</span>`;
         if (metadata.target_platform || metadata.platform) tagsHtml += `<span class="kb-meta-tag">${escapeHtml(metadata.target_platform || metadata.platform)}</span>`;
+        if (metadata.source && metadata.source !== 'direct_paste') tagsHtml += `<span class="kb-meta-tag"><i class="fa-solid fa-file"></i> ${escapeHtml(metadata.source)}</span>`;
+        if (metadata.strategy) tagsHtml += `<span class="kb-meta-tag">Strategy: ${escapeHtml(metadata.strategy)}</span>`;
+        if (metadata.chunk_index) tagsHtml += `<span class="kb-meta-tag">Chunk ${metadata.chunk_index}/${metadata.total_chunks || '?'}</span>`;
+        if (metadata.tags) {
+            let tagsArr = [];
+            if (Array.isArray(metadata.tags)) tagsArr = metadata.tags;
+            else if (typeof metadata.tags === 'string') {
+                try { tagsArr = JSON.parse(metadata.tags); } catch(e){}
+            }
+            if (Array.isArray(tagsArr)) {
+                tagsArr.forEach(t => tagsHtml += `<span class="kb-meta-tag">#${escapeHtml(t)}</span>`);
+            }
+        }
 
         // Media links & External specifications
         let mediaChips = '';

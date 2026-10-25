@@ -148,7 +148,7 @@ qa_ai_agent/
 │   ├── app.js            # Frontend logic, multi-session management, and ChromaDB explorer
 │   └── logo.png          # TestSense AI application logo
 ├── rag_service.py        # ChromaDB vector store, specialized chunking, embeddings & hybrid search
-├── rag_vector_store.json # Initial cold-start seed dataset (cards, Web IDs, and feature specs)
+├── data.txt              # Test card, customer profiles, and Web ID source dataset (zero JSON dependency)
 ├── sessions_store.json   # Server-backed persistent JSON session database
 ├── server.py             # FastAPI REST API wrapper for cloud deployment (Render, Vercel, Cloud Run)
 ├── vercel.json           # Vercel serverless configuration
@@ -209,7 +209,7 @@ The platform integrates a persistent **Retrieval-Augmented Generation (RAG)** ar
 * **Technology**: **ChromaDB** initialized via `chromadb.PersistentClient(path="./chroma_db")`.
 * **Collection Name**: `qa_knowledge_base`.
 * **Distance Metric**: **Cosine Distance** (`metadata={"hnsw:space": "cosine"}`).
-* **Cold-Start Auto-Migration**: If the vector store is empty on startup, it automatically loads and vectorizes the 43 initial seed records from `rag_vector_store.json` (19 cards, 21 test data items, 3 rich feature specifications).
+* **Cold-Start Auto-Seeding**: If the vector store is empty on startup (e.g. fresh deployment or new server environment), it automatically parses and vectorizes all records directly from `data.txt` (Macy's Proprietary cards, Amex cards, customer profiles, generic cards, gift cards, and Web IDs) with **zero dependency on any legacy JSON file**.
 
 ### 2. Embedding Model & Vector Dimensions
 * **Primary Embedding Model**: **Google GenAI `gemini-embedding-001`** accessed via the official `google.genai` SDK.

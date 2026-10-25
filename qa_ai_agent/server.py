@@ -14,6 +14,21 @@ try:
     aiohttp.connector.TCPConnector._get_ssl_context = lambda self, req: getattr(aiohttp.connector, '_SSL_CONTEXT_UNVERIFIED', None)
 except Exception:
     pass
+try:
+    import httpx
+    _orig_httpx_init = httpx.Client.__init__
+    def _patched_httpx_init(self, *args, **kwargs):
+        kwargs["verify"] = False
+        return _orig_httpx_init(self, *args, **kwargs)
+    httpx.Client.__init__ = _patched_httpx_init
+
+    _orig_httpx_async_init = httpx.AsyncClient.__init__
+    def _patched_httpx_async_init(self, *args, **kwargs):
+        kwargs["verify"] = False
+        return _orig_httpx_async_init(self, *args, **kwargs)
+    httpx.AsyncClient.__init__ = _patched_httpx_async_init
+except Exception:
+    pass
 
 import asyncio
 from fastapi import FastAPI, HTTPException, Request
@@ -569,6 +584,21 @@ class RAGSearchRequest(BaseModel):
 class RAGBatchDeleteRequest(BaseModel):
     ids: List[str]
 
+class ChunkPreviewRequest(BaseModel):
+    content: str
+    filename: Optional[str] = None
+    title: Optional[str] = None
+    strategy: Optional[str] = "llm"  # "text" | "llm"
+    chunk_size: Optional[int] = 500
+    overlap_size: Optional[int] = 50
+    instructions: Optional[str] = None
+
+class ChunkIngestRequest(BaseModel):
+    chunks: List[Dict[str, Any]]
+    filename: Optional[str] = None
+    document_title: Optional[str] = None
+    strategy: Optional[str] = "text"
+
 @app.get("/api/rag/stats")
 async def get_rag_stats():
     """Returns total vector count and breakdown by entity type, category, and card type from ChromaDB."""
@@ -608,6 +638,69 @@ async def ingest_rag_document(req: RAGIngestRequest):
     except Exception as e:
         logger.error(f"Error during RAG ingestion: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to ingest: {str(e)}")
+
+@app.post("/api/rag/chunks/preview")
+async def preview_rag_chunks(req: ChunkPreviewRequest):
+    """
+    Generates preview chunks from uploaded text or markdown content.
+    Supports fixed text-based chunking (with configurable size & overlap)
+    and LLM-based semantic chunking with Gemini.
+    """
+    if not req.content or not req.content.strip():
+        raise HTTPException(status_code=400, detail="Document content cannot be empty.")
+
+    strategy = req.strategy if req.strategy in ["text", "llm"] else "llm"
+    try:
+        preview = rag_store.preview_chunks(
+            content=req.content,
+            filename=req.filename or "",
+            strategy=strategy,
+            chunk_size=req.chunk_size or 500,
+            overlap_size=req.overlap_size or 50,
+            instructions=req.instructions,
+            title=req.title
+        )
+        return preview
+    except Exception as e:
+        logger.error(f"Error generating chunk preview: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate chunk preview: {str(e)}")
+
+@app.post("/api/rag/chunks/ingest")
+async def ingest_rag_chunks(req: ChunkIngestRequest):
+    """
+    Ingests user-reviewed and approved chunks into ChromaDB knowledge base.
+    Generates embeddings and stores lossless metadata for each chunk.
+    """
+    if not req.chunks or not isinstance(req.chunks, list):
+        raise HTTPException(status_code=400, detail="Chunks list cannot be empty.")
+
+    try:
+        result = rag_store.ingest_chunks_batch(
+            chunks=req.chunks,
+            filename=req.filename,
+            document_title=req.document_title,
+            strategy=req.strategy or "text"
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Error ingesting chunk batch: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to ingest chunks: {str(e)}")
+
+@app.post("/api/rag/reseed")
+async def reseed_rag_database():
+    """Administrative endpoint: purges ChromaDB and cleanly re-seeds all data directly from data.txt."""
+    try:
+        seeded_count = rag_store.reseed(force=True)
+        stats = rag_store.get_stats()
+        return {
+            "status": "success",
+            "message": f"Successfully re-seeded ChromaDB with {seeded_count} records directly from data.txt.",
+            "seeded_count": seeded_count,
+            "stats": stats
+        }
+    except Exception as e:
+        logger.error(f"Error reseeding database: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reseed database: {str(e)}")
 
 @app.delete("/api/rag/documents/{doc_id}")
 async def delete_rag_document(doc_id: str):

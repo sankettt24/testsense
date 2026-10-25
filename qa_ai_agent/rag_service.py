@@ -6,10 +6,29 @@ import time
 import math
 import shutil
 import logging
+import ssl
 from typing import List, Dict, Any, Optional
 import chromadb
 from chromadb.config import Settings
 from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
+
+# SSL & Corporate Proxy Intercept Patch for httpx and requests
+ssl._create_default_https_context = ssl._create_unverified_context
+try:
+    import httpx
+    _orig_httpx_init = httpx.Client.__init__
+    def _patched_httpx_init(self, *args, **kwargs):
+        kwargs["verify"] = False
+        return _orig_httpx_init(self, *args, **kwargs)
+    httpx.Client.__init__ = _patched_httpx_init
+
+    _orig_httpx_async_init = httpx.AsyncClient.__init__
+    def _patched_httpx_async_init(self, *args, **kwargs):
+        kwargs["verify"] = False
+        return _orig_httpx_async_init(self, *args, **kwargs)
+    httpx.AsyncClient.__init__ = _patched_httpx_async_init
+except Exception:
+    pass
 
 logger = logging.getLogger("TestSenseAI_RAG")
 
@@ -64,7 +83,8 @@ elif is_serverless:
 else:
     CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
 
-VECTOR_STORE_FILE = os.path.join(os.path.dirname(__file__), "rag_vector_store.json")
+# Cold-start source dataset: data.txt (Zero dependency on legacy rag_vector_store.json)
+DATA_TXT_FILE = os.path.join(os.path.dirname(__file__), "data.txt")
 
 # Lazy-loaded GenAI Client for embeddings
 _genai_client = None
@@ -381,9 +401,9 @@ def from_chroma_doc(doc_id: str, document: str, metadata: Dict[str, Any]) -> Dic
 # ==============================================================================
 
 class RAGVectorStore:
-    def __init__(self, chroma_dir: str = CHROMA_DB_DIR, legacy_json_file: str = VECTOR_STORE_FILE):
+    def __init__(self, chroma_dir: str = CHROMA_DB_DIR, data_txt_file: str = DATA_TXT_FILE):
         self.chroma_dir = chroma_dir
-        self.legacy_json_file = legacy_json_file
+        self.data_txt_file = data_txt_file
         
         # If in serverless environment (/tmp/chroma_db), copy pre-seeded repo chroma_db if available
         local_repo_chroma = os.path.join(os.path.dirname(__file__), "chroma_db")
@@ -452,37 +472,549 @@ class RAGVectorStore:
         count = self.collection.count()
         logger.info(f"Initialized ChromaDB vector store. Current document count: {count}")
         
+        # Cold start auto-seeding directly from data.txt (zero dependency on legacy json)
         if count == 0:
-            if os.path.exists(self.legacy_json_file):
-                self.migrate_from_json(self.legacy_json_file)
+            if os.path.exists(self.data_txt_file):
+                self.seed_from_data_txt(self.data_txt_file)
             else:
                 self.seed_default_knowledge()
 
-    def migrate_from_json(self, json_file: str):
-        """Migrates existing seeded documents from rag_vector_store.json into ChromaDB."""
-        try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            logger.info(f"Migrating {len(data)} items from legacy {json_file} into ChromaDB...")
-            ids = []
-            docs = []
-            metas = []
-            embs = []
-            for item in data.values():
-                ids.append(item["id"])
-                docs.append(item["chunk_text"])
-                metas.append(to_chroma_metadata(item))
-                if item.get("embedding"):
-                    embs.append(item["embedding"])
-                else:
-                    embs.append(generate_embedding(item["chunk_text"]))
+    def seed_from_data_txt(self, filepath: Optional[str] = None) -> int:
+        """
+        Parses data.txt directly and ingests all Macy's Proprietary cards,
+        Amex cards, Customer Profiles, Generic Test cards, Gift cards with PIN/Balance,
+        and Web IDs / Product Types into ChromaDB without any JSON dependency.
+        Also seeds the standard QA feature specifications so feature queries succeed.
+        """
+        if filepath is None:
+            filepath = self.data_txt_file
 
-            if ids:
-                self.collection.upsert(ids=ids, documents=docs, metadatas=metas, embeddings=embs)
-                logger.info(f"Successfully migrated {len(ids)} documents into ChromaDB!")
-        except Exception as e:
-            logger.warning(f"Error migrating from JSON: {e}, falling back to seeding.")
+        if not os.path.exists(filepath):
+            logger.warning(f"data.txt not found at {filepath}, falling back to default seed knowledge.")
             self.seed_default_knowledge()
+            return self.collection.count()
+
+        logger.info(f"Seeding ChromaDB knowledge base directly from {filepath}...")
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            logger.error(f"Error reading {filepath}: {e}, falling back to default seed knowledge.")
+            self.seed_default_knowledge()
+            return self.collection.count()
+
+        lines = content.splitlines()
+
+        # 1. Parse Proprietary and Amex Cards
+        current_tier = "Macy's Prop"
+        cards_to_ingest = []
+        for line in lines:
+            line_s = line.strip()
+            if line_s.startswith("### "):
+                current_tier = line_s.replace("###", "").strip()
+            elif line_s.startswith("*   **Card:**"):
+                parts = [p.strip() for p in line_s.replace("*", "").split("|")]
+                card_data = {
+                    "card_type": f"Macy's {current_tier}" if "tier" in current_tier.lower() or "prop" in current_tier.lower() else current_tier,
+                    "notes": f"{current_tier} card"
+                }
+                for p in parts:
+                    if "Card:" in p:
+                        card_data["card_number"] = p.split(":")[-1].replace("*", "").strip()
+                    elif "CVV:" in p:
+                        card_data["cid"] = p.split(":")[-1].replace("*", "").strip()
+                    elif "Exp:" in p:
+                        card_data["exp"] = p.split(":")[-1].replace("*", "").strip()
+                    elif "Note:" in p:
+                        card_data["notes"] = p.split(":")[-1].replace("*", "").strip()
+                    elif "Tier:" in p:
+                        card_data["card_type"] = f"Macy's Amex {p.split(':')[-1].replace('*', '').strip()}"
+
+                if card_data.get("card_number"):
+                    cards_to_ingest.append(card_data)
+
+        # 2. Parse Detailed Customer Profiles table
+        in_profile_table = False
+        for line in lines:
+            if "Detailed Customer Profiles" in line:
+                in_profile_table = True
+                continue
+            if in_profile_table:
+                if line.startswith("## ") or line.startswith("---"):
+                    in_profile_table = False
+                    continue
+                if "|" in line and not line.strip().startswith("| :---") and "Account Number" not in line:
+                    cols = [c.strip() for c in line.strip().strip("|").split("|")]
+                    if len(cols) >= 8:
+                        cards_to_ingest.append({
+                            "card_type": cols[1],
+                            "card_number": cols[0],
+                            "cid": "" if cols[2] == "N/A" else cols[2],
+                            "exp": cols[3],
+                            "name": cols[4],
+                            "address": cols[5],
+                            "phone": cols[6],
+                            "notes": f"Customer Profile: {cols[4]} ({cols[7]} - Phone: {cols[6]})"
+                        })
+
+        # 3. Parse Generic Test Cards table
+        in_generic = False
+        for line in lines:
+            if "Generic Test Cards" in line:
+                in_generic = True
+                continue
+            if in_generic:
+                if line.startswith("## ") or line.startswith("---"):
+                    in_generic = False
+                    continue
+                if "|" in line and not line.strip().startswith("| :---") and "Account Number" not in line:
+                    cols = [c.strip() for c in line.strip().strip("|").split("|")]
+                    if len(cols) >= 4:
+                        cards_to_ingest.append({
+                            "card_type": cols[0],
+                            "card_number": cols[1],
+                            "exp": cols[2],
+                            "cid": cols[3],
+                            "notes": f"Generic {cols[0]} Sandbox Test Card"
+                        })
+
+        # 4. Parse Gift Cards
+        gc_matches = re.findall(r"\*\s+(\d{15})\s+(\d{4})\s+-\s+(\$[0-9\.]+)", content)
+        for num, pin, amt in gc_matches:
+            cards_to_ingest.append({
+                "card_type": "Gift Card",
+                "card_number": num,
+                "cid": pin,
+                "amount": amt,
+                "notes": f"Active Macy's Gift Card with balance {amt} and PIN {pin}"
+            })
+
+        # 5. Parse PayPal Credentials
+        if "paypalqe@macys.com" in content:
+            cards_to_ingest.append({
+                "card_type": "PayPal Sandbox",
+                "card_number": "paypalqe@macys.com",
+                "cid": "N/A",
+                "exp": "N/A",
+                "notes": "Verified Macy's PayPal QE Credentials (Password: paypalqe@macys)"
+            })
+
+        # 6. Parse Web IDs / Product Types
+        test_data_to_ingest = []
+        in_web_ids = False
+        for line in lines:
+            if "Product Type" in line and "Web ID" in line:
+                in_web_ids = True
+                continue
+            if in_web_ids:
+                if line.startswith("## ") or line.startswith("---"):
+                    in_web_ids = False
+                    continue
+                if "|" in line and not line.strip().startswith("|---"):
+                    cols = [c.strip() for c in line.strip().strip("|").split("|")]
+                    if len(cols) >= 2:
+                        cat = cols[0]
+                        ids_str = cols[1]
+                        zip_c = cols[2] if len(cols) > 2 else ""
+                        if cat and ids_str:
+                            for single_id in [x.strip() for x in ids_str.split(",") if x.strip()]:
+                                test_data_to_ingest.append({
+                                    "category": cat.upper(),
+                                    "product_id": single_id,
+                                    "product_name": f"{cat} Test SKU #{single_id}",
+                                    "zip_code": zip_c,
+                                    "description": f"Verified Web ID for {cat} order flows" + (f" (Store Zip: {zip_c})" if zip_c else "")
+                                })
+
+        # 7. Core Feature Specs with rich links
+        features_to_ingest = [
+            {
+                "feature_name": "Credit Card Payment & Apple Pay Express Checkout",
+                "platform": "All Platforms",
+                "expected_behavior": "Enables customers to checkout seamlessly using Macy's Prop Card, Amex, Visa, MasterCard, Discover, or Apple Pay with real-time CVV and address validation.",
+                "potential_issues": "CVV mismatch error, tokenization timeout during high traffic, address verification service (AVS) failure on postal codes.",
+                "things_to_observe": "Verify payment authorization token in response wrapper, check that card number is properly masked (showing only last 4 digits), confirm Sentinel logs return HTTP 200 for auth service.",
+                "figma_url": "https://www.figma.com/design/example-payment-flow",
+                "testcase_urls": ["https://jira.company.com/browse/TC-PAY-001", "https://jira.company.com/browse/TC-PAY-002"],
+                "video_urls": ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"],
+                "image_urls": ["https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800"]
+            },
+            {
+                "feature_name": "Gift Card & M-Money Redemption Checkout Flow",
+                "platform": "All Platforms",
+                "expected_behavior": "Allows users to apply 15-digit gift cards with 4-digit CID/PIN up to maximum allowed split-tender amount ($2000 max split tender across up to 5 cards).",
+                "potential_issues": "Balance lock during order abandonment, invalid CID retry lockout (max 3 attempts), gift card balance deduction without reservation order ID.",
+                "things_to_observe": "Check remaining balance calculation, verify gift card applied status in cart summary, ensure payment lock released if transaction cancels.",
+                "figma_url": "https://www.figma.com/design/example-gift-card-flow",
+                "testcase_urls": ["https://jira.company.com/browse/TC-GC-101"],
+                "video_urls": ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"],
+                "image_urls": ["https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800"]
+            },
+            {
+                "feature_name": "BOPS Same-Day Store Fulfillment & Curbside Pickup",
+                "platform": "All Platforms",
+                "expected_behavior": "Buy Online, Pick Up in Store (BOPS) allows customers to reserve inventory in local physical store (e.g. zip 22102) for same-day 2-hour pickup.",
+                "potential_issues": "Store inventory stockout between reservation and store associate picking, geofence check-in failure when customer arrives curbside, barcode scan mismatch.",
+                "things_to_observe": "Verify reservationId generated in order payload, check store zip code 22102 matching SKU 86800 / 1494, observe curbside notification trigger in customer app.",
+                "figma_url": "https://www.figma.com/design/example-bops-flow",
+                "testcase_urls": ["https://jira.company.com/browse/TC-BOPS-201", "https://jira.company.com/browse/TC-BOPS-202"],
+                "video_urls": ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"],
+                "image_urls": ["https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800"]
+            }
+        ]
+
+        ids = []
+        docs = []
+        metas = []
+        embs = []
+
+        for card in cards_to_ingest:
+            chunk = chunk_card_item(card)
+            emb = generate_embedding(chunk["chunk_text"])
+            ids.append(chunk["id"])
+            docs.append(chunk["chunk_text"])
+            metas.append(to_chroma_metadata(chunk))
+            embs.append(emb)
+
+        for td in test_data_to_ingest:
+            chunk = chunk_test_data_item(td)
+            emb = generate_embedding(chunk["chunk_text"])
+            ids.append(chunk["id"])
+            docs.append(chunk["chunk_text"])
+            metas.append(to_chroma_metadata(chunk))
+            embs.append(emb)
+
+        for feat in features_to_ingest:
+            chunk = chunk_feature_item(feat)
+            emb = generate_embedding(chunk["chunk_text"])
+            ids.append(chunk["id"])
+            docs.append(chunk["chunk_text"])
+            metas.append(to_chroma_metadata(chunk))
+            embs.append(emb)
+
+        if ids:
+            self.collection.upsert(ids=ids, documents=docs, metadatas=metas, embeddings=embs)
+            logger.info(f"Successfully seeded {len(ids)} documents directly from {filepath} into ChromaDB!")
+
+        return len(ids)
+
+    # --------------------------------------------------------------------------
+    # Text-Based & LLM-Based Chunking Engine
+    # --------------------------------------------------------------------------
+
+    def chunk_text_fixed(
+        self,
+        text: str,
+        chunk_size: int = 500,
+        overlap_size: int = 50,
+        title_prefix: str = "Document"
+    ) -> List[Dict[str, Any]]:
+        """
+        Splits plain text or markdown using a sliding window of chunk_size with overlap_size.
+        Respects natural paragraph, line, and sentence boundaries to avoid splitting mid-word.
+        """
+        text = text.strip()
+        if not text:
+            return []
+
+        if len(text) <= chunk_size:
+            return [{
+                "chunk_index": 1,
+                "total_chunks": 1,
+                "title": f"{title_prefix} - Complete",
+                "text": text,
+                "char_count": len(text),
+                "word_count": len(text.split()),
+                "strategy": "text"
+            }]
+
+        chunks = []
+        start = 0
+        total_len = len(text)
+        idx = 1
+        safe_chunk_size = max(chunk_size, 100)
+        safe_overlap = max(min(overlap_size, safe_chunk_size // 2), 0)
+
+        while start < total_len:
+            end = min(start + safe_chunk_size, total_len)
+            if end < total_len:
+                # Look for paragraph break
+                split_at = text.rfind("\n\n", start + safe_chunk_size // 2, end)
+                if split_at == -1:
+                    # Look for newline break
+                    split_at = text.rfind("\n", start + safe_chunk_size // 2, end)
+                if split_at == -1:
+                    # Look for sentence boundary
+                    split_at = text.rfind(". ", start + safe_chunk_size // 2, end)
+                    if split_at != -1:
+                        split_at += 1
+                if split_at == -1:
+                    # Look for word boundary space
+                    split_at = text.rfind(" ", start + safe_chunk_size // 2, end)
+                if split_at != -1:
+                    end = split_at
+
+            chunk_str = text[start:end].strip()
+            if chunk_str:
+                chunks.append({
+                    "chunk_index": idx,
+                    "title": f"{title_prefix} - Part {idx}",
+                    "text": chunk_str,
+                    "char_count": len(chunk_str),
+                    "word_count": len(chunk_str.split()),
+                    "strategy": "text"
+                })
+                idx += 1
+
+            if end >= total_len:
+                break
+            start = max(end - safe_overlap, start + 1)
+
+        for c in chunks:
+            c["total_chunks"] = len(chunks)
+        return chunks
+
+    def _chunk_markdown_fallback(self, text: str, title_prefix: str = "Document") -> List[Dict[str, Any]]:
+        """
+        Fallback semantic chunker: splits by markdown headings (##, ###) while preserving document context.
+        """
+        lines = text.strip().splitlines()
+        chunks = []
+        current_title = f"{title_prefix} - Overview"
+        current_lines = []
+        top_header = ""
+
+        for line in lines:
+            line_s = line.strip()
+            if line_s.startswith("# ") and not top_header:
+                top_header = line_s
+                current_lines.append(line)
+            elif line_s.startswith("## ") or line_s.startswith("### "):
+                if current_lines:
+                    chunk_text = "\n".join(current_lines).strip()
+                    if chunk_text:
+                        chunks.append({
+                            "chunk_index": len(chunks) + 1,
+                            "title": current_title,
+                            "text": chunk_text,
+                            "summary": f"Covers section: {current_title}",
+                            "tags": ["markdown_section"],
+                            "char_count": len(chunk_text),
+                            "word_count": len(chunk_text.split()),
+                            "strategy": "llm_fallback"
+                        })
+                current_title = re.sub(r"^#+\s*", "", line_s)
+                current_lines = [top_header, line] if top_header and top_header != line_s else [line]
+            else:
+                current_lines.append(line)
+
+        if current_lines:
+            chunk_text = "\n".join(current_lines).strip()
+            if chunk_text:
+                chunks.append({
+                    "chunk_index": len(chunks) + 1,
+                    "title": current_title,
+                    "text": chunk_text,
+                    "summary": f"Covers section: {current_title}",
+                    "tags": ["markdown_section"],
+                    "char_count": len(chunk_text),
+                    "word_count": len(chunk_text.split()),
+                    "strategy": "llm_fallback"
+                })
+
+        if not chunks:
+            chunks = self.chunk_text_fixed(text, chunk_size=800, overlap_size=80, title_prefix=title_prefix)
+
+        for c in chunks:
+            c["total_chunks"] = len(chunks)
+        return chunks
+
+    def chunk_text_llm(
+        self,
+        text: str,
+        instructions: Optional[str] = None,
+        title_prefix: str = "Document"
+    ) -> List[Dict[str, Any]]:
+        """
+        Uses Gemini (gemini-flash-lite-latest) to perform intelligent, semantic chunking without context loss.
+        Preserves section titles, table structures, and contextual headers in each chunk.
+        If Gemini API encounters a temporary issue or text is too large, gracefully falls back to markdown semantic chunking.
+        """
+        client = get_genai_client()
+        if not client:
+            logger.warning("GenAI client unavailable; using markdown fallback chunker.")
+            return self._chunk_markdown_fallback(text, title_prefix=title_prefix)
+
+        prompt = f"""You are an expert document chunking specialist for RAG vector search systems.
+Split the following document into logically coherent, self-contained semantic chunks.
+
+CRITICAL RULES FOR NO CONTEXT LOSS:
+1. Every chunk must be completely understandable on its own without needing previous chunks.
+2. Retain necessary context: include the parent section headers, table headers, document title, or domain subject in each chunk.
+3. Do NOT cut mid-table, mid-list, or mid-thought.
+4. Group logically related items together (e.g. all Platinum tier cards together, all gift cards together, customer profiles together).
+5. Provide a descriptive, meaningful title for each chunk (e.g. 'Customer Profiles - MAPP iOS & Android').
+6. Include tags/keywords for each chunk.
+7. Instructions from user: {instructions if instructions and instructions.strip() else 'None. Preserve complete context and logical grouping.'}
+
+Output ONLY valid JSON matching this schema:
+{{
+  "chunks": [
+    {{
+      "title": "Descriptive title for this chunk",
+      "content": "Exact chunk text including section headers",
+      "summary": "1 sentence summary",
+      "tags": ["tag1", "tag2"]
+    }}
+  ]
+}}
+
+Document Title: {title_prefix}
+Document Content:
+{text}
+"""
+        try:
+            resp = client.models.generate_content(
+                model="gemini-flash-lite-latest",
+                contents=prompt
+            )
+            raw = (resp.text or "").strip()
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
+            if match:
+                data = json.loads(match.group(0))
+                raw_chunks = data.get("chunks", [])
+                if raw_chunks:
+                    chunks = []
+                    for i, c in enumerate(raw_chunks):
+                        c_text = (c.get("content") or "").strip()
+                        if not c_text:
+                            continue
+                        chunks.append({
+                            "chunk_index": i + 1,
+                            "total_chunks": len(raw_chunks),
+                            "title": c.get("title") or f"{title_prefix} - Section {i+1}",
+                            "text": c_text,
+                            "summary": c.get("summary", ""),
+                            "tags": c.get("tags") if isinstance(c.get("tags"), list) else [],
+                            "char_count": len(c_text),
+                            "word_count": len(c_text.split()),
+                            "strategy": "llm"
+                        })
+                    if chunks:
+                        for c in chunks:
+                            c["total_chunks"] = len(chunks)
+                        return chunks
+            logger.warning("Could not extract JSON chunks from Gemini response; using fallback chunker.")
+        except Exception as e:
+            logger.warning(f"Error during LLM chunking ({e}); falling back to markdown semantic chunker.")
+
+        return self._chunk_markdown_fallback(text, title_prefix=title_prefix)
+
+    def preview_chunks(
+        self,
+        content: str,
+        filename: str = "",
+        strategy: str = "llm",
+        chunk_size: int = 500,
+        overlap_size: int = 50,
+        instructions: Optional[str] = None,
+        title: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Generates chunk previews for user inspection before ingestion into ChromaDB."""
+        doc_title = title or filename or "Uploaded Document"
+        if strategy == "text":
+            chunks = self.chunk_text_fixed(
+                text=content,
+                chunk_size=chunk_size,
+                overlap_size=overlap_size,
+                title_prefix=doc_title
+            )
+        else:
+            chunks = self.chunk_text_llm(
+                text=content,
+                instructions=instructions,
+                title_prefix=doc_title
+            )
+
+        total_chars = sum(c.get("char_count", 0) for c in chunks)
+        total_words = sum(c.get("word_count", 0) for c in chunks)
+
+        return {
+            "status": "success",
+            "strategy": strategy,
+            "document_title": doc_title,
+            "filename": filename,
+            "total_chunks": len(chunks),
+            "total_chars": total_chars,
+            "total_words": total_words,
+            "chunks": chunks
+        }
+
+    def ingest_chunks_batch(
+        self,
+        chunks: List[Dict[str, Any]],
+        filename: Optional[str] = None,
+        document_title: Optional[str] = None,
+        strategy: str = "text"
+    ) -> Dict[str, Any]:
+        """Ingests a verified list of chunks into ChromaDB."""
+        if not chunks:
+            return {"status": "error", "message": "No chunks provided to ingest.", "ingested_count": 0}
+
+        ids = []
+        docs = []
+        metas = []
+        embs = []
+
+        source_doc = document_title or filename or "Custom Document"
+        created_time = time.time()
+
+        for i, c in enumerate(chunks):
+            doc_id = str(c.get("id") or f"doc_{uuid.uuid4().hex[:12]}")
+            chunk_title = c.get("title") or f"{source_doc} (Part {i+1})"
+            text = c.get("text") or c.get("content") or ""
+            if not text.strip():
+                continue
+
+            chunk_meta = {
+                "source": filename or "direct_paste",
+                "document_title": source_doc,
+                "chunk_index": i + 1,
+                "total_chunks": len(chunks),
+                "strategy": strategy,
+                "summary": c.get("summary", ""),
+                "tags": c.get("tags", [])
+            }
+
+            emb = generate_embedding(text)
+            chroma_meta = {
+                "doc_id": doc_id,
+                "entity_type": "document",
+                "title": chunk_title,
+                "created_at": created_time,
+                "source": filename or "direct_paste",
+                "document_title": source_doc,
+                "chunk_index": i + 1,
+                "total_chunks": len(chunks),
+                "strategy": strategy,
+                "tags": json.dumps(c.get("tags", [])),
+                "_full_meta_json": json.dumps(chunk_meta)
+            }
+
+            ids.append(doc_id)
+            docs.append(text)
+            metas.append(chroma_meta)
+            embs.append(emb)
+
+        if ids:
+            self.collection.upsert(ids=ids, documents=docs, metadatas=metas, embeddings=embs)
+            logger.info(f"Ingested {len(ids)} document chunks from '{source_doc}' into ChromaDB.")
+
+        return {
+            "status": "success",
+            "message": f"Successfully ingested {len(ids)} chunks from '{source_doc}' into ChromaDB.",
+            "ingested_count": len(ids)
+        }
 
     def ingest(self, entity_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Ingests a card, feature, or test data item with specialized chunking and vectorization into ChromaDB."""
@@ -554,6 +1086,7 @@ class RAGVectorStore:
         features = 0
         cards = 0
         test_data = 0
+        documents = 0
         categories: Dict[str, int] = {}
         card_types: Dict[str, int] = {}
         platforms: Dict[str, int] = {}
@@ -572,16 +1105,32 @@ class RAGVectorStore:
                 test_data += 1
                 cat = str(m.get("category") or "GENERAL").strip().upper()
                 categories[cat] = categories.get(cat, 0) + 1
+            elif etype in ["document", "doc", "general"]:
+                documents += 1
 
         return {
             "total_vectors": total,
             "features_count": features,
             "cards_count": cards,
             "test_data_count": test_data,
+            "documents_count": documents,
             "categories": categories,
             "card_types": card_types,
             "platforms": platforms
         }
+
+    def reseed(self, force: bool = True) -> int:
+        """Clears all vectors and re-seeds cleanly from data.txt."""
+        if force:
+            try:
+                all_docs = self.collection.get()
+                all_ids = all_docs.get("ids", [])
+                if all_ids:
+                    self.collection.delete(ids=all_ids)
+                    logger.info(f"Purged {len(all_ids)} documents for clean re-seed.")
+            except Exception as e:
+                logger.warning(f"Error purging documents during reseed: {e}")
+        return self.seed_from_data_txt(self.data_txt_file)
 
     def search(self, query: str, top_k: int = 5, filter_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """

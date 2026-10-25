@@ -1,0 +1,122 @@
+# Test Card Data Repository
+
+This document contains test data for various credit cards, gift cards, and customer profiles used for testing purposes (e.g., Macy's Proprietary, Amex, Gift Cards, and generic cards).
+
+## 1. Macy's Proprietary Cards (Store Cards)
+
+### Platinum Tier
+*   **Card:** 6035340000576492 | **CVV:** 481 | **Exp:** 12/2029 
+*   **Card:** 6035340399633540 | **CVV:** 891
+*   **Card:** 6035340399625694 | **CVV:** 376
+*   **Card:** 6035340001207709 | **CVV:** 933 | **Exp:** 01/2028
+
+*   **Card:** 6035340001224902 | **Note:** Working BT Macy's Card
+
+### Gold Tier
+*   **Card:** 6035340000050209 | **CVV:** 655 | **Note:** PROP/EMP 
+
+### Silver Tier
+*   **Card:** 6035340000050266 | **CVV:** 100 | **Note:** L940335077139
+
+### Macy's Prop
+*   **Card:** 6035340399633342 | **CVV:** 887
+*   **Card:** 6035340399633250 | **CVV:** 749
+*   **Card:** 6035340009553633 | **CVV:** 425
+*   **Card:** 6035340399633235 | **CVV:** 217
+*   **Card:** 6035340000573051 | **CVV:** 002 | **Exp:** 12/2029    
+*   **Card:** 6035340001207774 | **CVV:** 711 | **Exp:** 12/2029 
+
+---
+
+## 2. Macy's American Express (AMEX) Cards
+
+*   **Card:** 377481599274799 | **CVV:** 1903 | **Exp:** 02/2027 | **Tier:** Silver
+*   **Card:** 377481406011913 | **CVV:** 6653 | **Exp:** 01/2028 | **Note:** Working BT Macy's Card
+
+
+---
+
+## 3. Detailed Customer Profiles (MAPP IOS & Android)
+
+| Account Number | Type | CVV | Exp | Name | Address | Phone | Team |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 6035340001207774 | Macys PROP | 711 | 12/2029 | ANTHONY, KING | 500 E GROUNDGROVE RD, LEWISVILLE, TX 75070 | 469-210-1224 | MAPP IOS |
+| 6035340000576492 | Macys PROP | 481 | 12/2029 | BETTY, WRIGHT | 500 E GROUNDGROVE RD, LEWISVILLE, TX 75070 | 469-210-1224 | MAPP Android |
+| 6035340000573051 | Macys PROP | 002 | 12/2029 | MARK, SCOTT | 500 E GROUNDGROVE RD, LEWISVILLE, TX 75070 | 469-210-1224 | MAPP XAPI |
+| 377481406547395 | Macys AMEX | 2010| 12/2029 | RICHARD, HARRIS | 537 E GROUNDGROVE RD, LEWISVILLE, TX 75107 | 469-210-1224 | MAPP IOS |
+| 377481407037719 | Macys AMEX | 0283| 12/2029 | PATRICIA, MARTIN| 538 E GROUNDGROVE RD, LEWISVILLE, TX 75108 | 469-210-1224 | MAPP Android |
+| 377481406535580 | Macys AMEX | 0363| 12/2029 | CHARLES, THOMPSON| 539 E GROUNDGROVE RD, LEWISVILLE, TX 75109 | 469-210-1224 | MAPP XAPI |
+| 6035340000311932 | Macys PL | N/A | 12/2049 | Kuiwan, Gounmewee| 680 Folsom Street, Suite 100, Apt 121, San Francisco, CA 94107 | 219-108-9722 | MAPP_iOS |
+| 377481406560182 | Macys AMEX | N/A | 12/2031 | Riwebotent, Hien | 100 Main Street, Apt 101, New York, NY 10001 | 602-630-9473 | MAPP_iOS |
+| 6035341408195620 | Macys Emp. | N/A | 12/2049 | Tohuk, Ma | 680 Folsom Street, Suite 100, Apt 121, San Francisco, CA 94107 | 972-956-7025 | MAPP_iOS |
+
+---
+
+## 4. Generic Test Cards
+
+| Type | Account Number | Exp | CVV |
+| :--- | :--- | :--- | :--- |
+| American Express | 3411 1159 7242 000 | 12/22 | 1154 |
+| Discover | 6011 0009 9147 2808 | 12/22 | 222 |
+| MasterCard | 5444 0099 9922 2205 | 12/22 | 222 |
+| Visa | 4445 2222 9999 0007 | 12/22 | 222 |
+
+---
+
+## 5. Macy's Gift Cards (GC)
+
+**Format:** `[15-Digit Card Number]` `[4-Digit PIN]` - `[Amount]`
+*   650193392603726 7416 - $10.00
+*   651167392603733 9669 - $20.00
+*   658119392603742 1952 - $20.00
+*   651134392603759 5259 - $20.00
+*   655128392603761 1554 - $30.00
+*   654120392603773 2542 - $30.00
+*   650191392603784 8428 - $40.00
+*   655108392603824 6412 - $50.00
+*   650120392603920 1972 - $60.00
+*   656117392603948 3394 - $90.00
+*   656183392603837 8355 - $100.00
+*   656181392603918 4947 - $120.00
+*   651171392603952 5796 - $130.00
+*   652115392603962 7936 - $140.00
+*   650106392603979 8714 - $200.00
+*   657192392603982 5867 - $300.00
+
+
+*   **PayPal Credentials:** `paypalqe@macys.com` / `paypalqe@macys`
+
+| Product Type      | ID / Web ID                                     | Notes (Zip Code) |
+
+|-------------------|-------------------------------------------------|------------------|
+
+| Ship              | 86800, 1503                                     |                  |
+
+| Bops              | 86800, 1494                                     | 22102            |
+
+| Boss              | 570992                                          | 22102            |
+
+| GWP               | 1494, 570992, 75101                             |                  |
+
+| VGC               | 4391437                                         |                  |
+
+| EGC               | 10509228                                        |                  |
+
+| 2 tier            | 13638432                                        |                  |
+
+| PWP               | 570992                                          |                  |
+
+| 3P                | 15313152, 15296864, 15293549, 16288362          |                  |
+
+| Color & Size PDP  | 16037423, 8790118                               |                  |
+
+| Chanel PDP        | 8224326                                         |                  |
+
+| BT                | 1434002, 7117897                                |                  |
+
+| LTL               | 16286842, 16286278, 15513708                    |                  |
+
+| WNM               | 16182527, 4660801, 15961489, 8023713            |                  |
+
+
+
