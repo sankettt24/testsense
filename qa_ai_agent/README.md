@@ -226,25 +226,88 @@ The RAG database categorizes documents into three distinct entity types:
 | **QA Test Data & Web IDs** | `test_data` | `category`, `product_id` (Web ID), `product_name`, `zip_code`, `description` | BOPS (86800), BOSS (8790118), SHIP (13638432), GWP (1494), Chanel Luxury PDP |
 | **Feature Specifications** | `feature` | `name`, `platform`, `expected`, `issues` (edge cases), `observe` (AC), `image_url`, `video_url` | BOPS Store Fulfillment, Star Money Rewards, M/B-Money Customer Funding |
 
-### 4. Specialized Chunking & Ingestion Pipeline
-Raw inputs are transformed through specialized chunking functions before vectorization:
+### 4. Specialized Chunking & Ingestion Pipeline (How Chunks are Formed)
 
-1. **Card Chunking (`chunk_card_item`)**:
-   - Isolates sensitive payment fields, structures CVV, expiration date, and billing address.
-   - Appends contextual search keywords (e.g. `Prop Gold card number payment test card sandbox credit debit prop 6035340000050209`).
-2. **Feature Chunking (`chunk_feature_item`)**:
-   - Generates structured sections for `Feature Name`, `Platform Target`, `Expected Behavior & Business Requirements`, `Potential Edge Cases & Failure Modes`, and `Things to Observe (Acceptance Criteria)`.
-   - Embeds direct links for video walkthroughs (`.mp4`, YouTube) and screenshot images (`.jpg`, `.png`).
-3. **Test Data Chunking (`chunk_test_data_item`)**:
-   - Formats order category (`BOPS`, `BOSS`, `SHIP`, `GWP`), Web ID, product name, and zip code.
-4. **Metadata Flattening & Lossless Roundtrip**:
-   - ChromaDB strictly enforces primitive types (`str`, `int`, `float`, `bool`) in its metadata dictionaries.
-   - `to_chroma_metadata()` extracts flat fields for ChromaDB indexing and serializes the complete nested dictionary into `_full_meta_json`.
-   - `from_chroma_doc()` deserializes `_full_meta_json` on retrieval, ensuring 100% data fidelity with zero attribute loss.
+Standard RAG architectures rely on naive text splitters (such as fixed 500-character or sentence-based recursive chunkers). In QA automation and test data intelligence, generic splitters fail because:
+* They slice credit card numbers from their respective CVVs, expiration dates, and billing addresses.
+* They separate product Web IDs from their required zip codes and order fulfillment rules (e.g., separating BOPS Web IDs from store zip `22102`).
+* They decouple feature specifications from their acceptance criteria, failure modes, and demo video / screenshot asset links.
+
+To solve this, **TestSense AI** uses a **Domain-Specific Semantic Chunking Engine** in [`rag_service.py`](file:///Users/2457196/Desktop/gemi/qa_ai_agent/rag_service.py) with three distinct chunking templates:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               SPECIALIZED CHUNKING SCHEMAS                                      │
+├───────────────────────────────┬─────────────────────────────────┬───────────────────────────────┤
+│    1. Feature Chunking        │     2. Payment Card Chunking    │    3. Test Data Chunking      │
+│     (chunk_feature_item)      │        (chunk_card_item)        │    (chunk_test_data_item)     │
+├───────────────────────────────┼─────────────────────────────────┼───────────────────────────────┤
+│ • Entity Header               │ • Entity Header                 │ • Entity Header               │
+│ • Feature Name & Platform     │ • Card Type & Account Number    │ • Order Category (BOPS/SHIP)  │
+│ • Expected Behavior & Specs   │ • CVV / CID & Expiry Date       │ • Web ID / SKU & Product Name │
+│ • Observed Issues & Gotchas   │ • Available Balance / Value     │ • Applicable Store Zip Code   │
+│ • Acceptance Criteria (AC)    │ • Associated Billing Address    │ • Fulfillment Details         │
+│ • Embedded Video & Image URLs │ • Usage Notes & Channels        │ • Domain Keyword Boost Tokens │
+│ • Domain Keyword Boost Tokens │ • Domain Keyword Boost Tokens   │                               │
+└───────────────────────────────┴─────────────────────────────────┴───────────────────────────────┘
+```
+
+#### A. Feature Specifications (`chunk_feature_item`)
+Combines business requirements, edge cases, acceptance criteria, and rich media asset links into a single unified chunk:
+```text
+[ENTITY: QA FEATURE INTELLIGENCE]
+Feature Name: BOPS Same-Day Store Fulfillment Flow
+Target Platform / Channel: MCOM Site & App
+Expected Behavior & Business Requirements:
+Customer chooses 'Pick Up In Store', selects store by zip (e.g. 22102), and completes checkout. Reservation ID is generated, and status moves from RESERVED -> SHPSHPD once store fulfills.
+Potential Issues & Edge Cases Faced:
+Inventory mismatch between warehouse and physical store can cause cancellation; reservationId wrapper response missing in order mods payload if order is STH.
+Things to Observe & Acceptance Criteria:
+Check that reservation ID is non-empty; verify SHPSHPD status update event completes with 200 HTTP response code; inspect store hours in confirmation email.
+Image / Screenshot Link: https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800
+Video Demo / Walkthrough Link: https://www.w3schools.com/html/mov_bbb.mp4
+Keywords: BOPS Same-Day Store Fulfillment Flow feature acceptance criteria test scenario edge cases observation MCOM Site & App
+```
+* **Why this works**: When a QA engineer asks *"What can go wrong during BOPS store fulfillment?"* or *"Show me the demo for BOPS"*, cosine similarity matches across the `Expected Behavior`, `Potential Issues`, and `Things to Observe` sections, returning the exact criteria alongside the direct video and screenshot links in one query.
+
+#### B. Payment & Test Cards (`chunk_card_item`)
+Ensures credit cards, gift cards, and loyalty credentials retain complete context without number fragmentation:
+```text
+[ENTITY: QA PAYMENT & TEST CARD]
+Card Type: Prop Gold
+Card Number: 6035340000050209
+CVV / CID: 655
+Expiration: 07/29
+Associated Billing Address: 680 Folsom Street 100, SAN FRANCISCO, CA 94107
+Notes: Verified working in mcom-170 checkout flow
+Keywords: Prop Gold card number payment test card sandbox credit debit prop 6035340000050209
+```
+* **Why this works**: Captures the complete account number with synthetic keywords (`sandbox`, `credit`, `prop`, `payment`), allowing natural queries like *"can you give me macys card"* or exact numerical queries (`"6035340000050209"`) to match with high confidence.
+
+#### C. QA Test Data & Web IDs (`chunk_test_data_item`)
+Tailored for order categories, product SKUs, and store fulfillment rules:
+```text
+[ENTITY: QA TEST DATA & WEB ID]
+Category / Order Type: BOPS
+Product Web ID / SKU: 86800
+Product Name: Men's Classic Wool Winter Overcoat
+Applicable Zip Code / Location: 22102
+Description & Details: Verified in mcom-131 for pickup testing
+Keywords: BOPS web id product id test data 86800 Men's Classic Wool Winter Overcoat
+```
+* **Why this works**: Links category types (`BOPS`, `BOSS`, `SHIP`, `GWP`, `3P`, `BT`, `LTL`) directly with valid Web IDs and store zip codes (e.g. `22102`), giving automated order mocking and manual testers immediate copy-paste data.
+
+#### D. Metadata Flattening & Lossless Roundtrip Serialization
+ChromaDB strictly requires flat primitive types (`str`, `int`, `float`, `bool`) in metadata dictionaries. To maintain 100% attribute fidelity:
+* `to_chroma_metadata()`: Extracts indexed flat fields for filtering, and serializes the complete nested dictionary into a `_full_meta_json` string.
+* `from_chroma_doc()`: Deserializes `_full_meta_json` upon retrieval, ensuring zero data loss for nested URLs, timestamps, and extended attributes.
+
+---
 
 ### 5. Hybrid Retrieval & Search Scoring
+
 When an agent or user queries the RAG store:
-1. An embedding vector is computed for the query string.
+1. An embedding vector is computed for the query string using `gemini-embedding-001` (768 dimensions).
 2. ChromaDB queries top candidates using cosine distance ($d \in [0, 2]$).
 3. Cosine similarity is computed as $S_{\text{semantic}} = \max(0.0, 1.0 - d)$.
 4. **Keyword & Identifier Boosting**:
@@ -253,19 +316,84 @@ When an agent or user queries the RAG store:
    - **Keyword Hits**: Scaled up to $+0.35$ based on token overlap.
 5. Total score: $S_{\text{total}} = \min(1.0, 0.65 \times S_{\text{semantic}} + S_{\text{keyword}} + S_{\text{id\_boost}})$.
 
-### 6. Dashboard Data Breakdown & Selective Deletion
-The interactive **RAG Knowledge Dashboard** at `/app` provides complete transparency and granular control:
-* **"What's in ChromaDB?" Breakdown Tags**:
-  - Displays dynamic item counts across **Categories** (`BOPS`, `BOSS`, `SHIP`, `GWP`, `3P`, `BT`, `LTL`, etc.), **Card Types** (`Prop Gold`, `Platinum`, `Amex`, `Gift Cards`), and **Platforms** (`MCOM`, `BCOM`).
-  - **Click-to-Filter**: Clicking any tag instantly filters the documents explorer to inspect only matching items.
-* **Selective Deletion (No "Delete All" Accidents)**:
-  - Each vectorized card has an individual selection checkbox.
-  - A floating selection toolbar displays `X Selected`, `Select All Visible`, `Deselect All`, and a danger-glow `Delete Selected` button.
-  - Clicking `Delete Selected` opens a confirmation modal displaying the exact titles to be deleted before calling `POST /api/rag/documents/batch-delete`.
-  - Individual items can also be deleted directly via `DELETE /api/rag/documents/{id}`.
-* **Interactive Media Previews in Chat & Dashboard**:
-  - Video walkthroughs and screenshot links render as interactive chips (`▶ Video Demo`, `🖼 Screenshot`).
-  - Clicking any chip opens a high-definition preview modal with an embedded video player and screenshot viewer.
+---
+
+### 6. RAG Ingestion Dashboard: How Data is Displayed & Controlled
+
+The **RAG Ingestion Dashboard** (accessible at `/app` by clicking the **RAG Dashboard** button in the header) provides a real-time visual control center for ChromaDB:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           RAG KNOWLEDGE DASHBOARD ARCHITECTURE                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1. REAL-TIME METRICS COUNTERS                                                                   │
+│    [ 43 ChromaDB Vectors ]  [ 3 Features ]  [ 19 Cards & Payment ]  [ 21 Web IDs & TestData ]   │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 2. KNOWLEDGE INGESTION HUB (SPECIALIZED FORMS)                                                  │
+│    [ New Feature Tab ]     [ New Card Tab ]     [ Test Data / Web ID Tab ]                      │
+│    ↳ Input fields tailored to chunking schema → [ Vectorize & Store in ChromaDB ]              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 3. SEMANTIC CHROMADB SEARCH TESTER                                                              │
+│    [ Query: 'can you give me macys card' ] → [ Search Vectors ]                                 │
+│    ↳ Displays Cosine Match Score (e.g. 96.4%), Entity Type Badge, and Raw Vector Chunk Text    │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 4. "WHAT'S IN CHROMADB?" COMPOSITION BREAKDOWN                                                  │
+│    [ All (43) ] [ Features (3) ] [ Cards (19) ] [ Test Data (21) ]                              │
+│    [ BOPS (6) ] [ SHIP (4) ] [ BOSS (3) ] [ Prop Gold (2) ] [ Amex (2) ] [ Visa (3) ] ...       │
+│    ↳ Click any tag to instantly filter document cards in the explorer                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 5. CHROMADB KNOWLEDGE BASE INDEX (DOCUMENT CARDS GRID)                                          │
+│    ┌──────────────────────────────────┐      ┌──────────────────────────────────┐               │
+│    │ ☑ [FEATURE]  BOPS Store Fulfill  │      │ ☑ [CARD]  Prop Gold (..5020)     │               │
+│    │ Badges: MCOM Site & App          │      │ Badges: Exp: 07/29 | CVV: 655    │               │
+│    │ ┌──────────────────────────────┐ │      │ ┌──────────────────────────────┐ │               │
+│    │ │ Monospace Chunk Preview Box  │ │      │ │ Monospace Chunk Preview Box  │ │               │
+│    │ └──────────────────────────────┘ │      │ └──────────────────────────────┘ │               │
+│    │ [▶ Video Demo] [🖼 Screenshot]   │      │ [🗑 Delete Document]             │               │
+│    └──────────────────────────────────┘      └──────────────────────────────────┘               │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 6. SELECTION & GRANULAR DELETION TOOLBAR                                                        │
+│    [☑ Select All Visible (43)]  [✓ 2 Selected]  [🗑 Delete Selected (2)]  [✕ Clear]             │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### How Chunks Appear on the Dashboard
+
+1. **Real-Time Metrics Grid**:
+   - Four glowing counters at the top query `GET /api/rag/stats` to show vector distribution across `Features`, `Cards`, and `Web IDs / Test Data`.
+
+2. **Specialized Ingestion Forms**:
+   - The **Knowledge Ingestion Hub** offers three segmented tabs (`New Feature`, `New Card`, `Test Data / Web ID`).
+   - Each tab exposes form fields matching its exact chunking rules (e.g. Expected Behavior, Edge Cases, Video Link, Card CVV, Store Zip).
+   - Submitting the form calls `POST /api/rag/ingest`, which chunks the input, embeds it with Google GenAI, saves it to ChromaDB, and immediately refreshes the cards.
+
+3. **Semantic Search Playground**:
+   - QA testers can test retrieval quality in real-time before running test cases.
+   - Submitting a query calls `POST /api/rag/query`, displaying:
+     - Cosine similarity percentage score (e.g. `96.4% Match`).
+     - Entity category badge.
+     - Document ID and the **exact chunk text** returned by ChromaDB.
+
+4. **"What's in ChromaDB?" Category Breakdown**:
+   - Analyzes all vectors in ChromaDB to dynamically build filter chips (`BOPS (6)`, `SHIP (4)`, `Prop Gold (2)`, `Amex (2)`, `Gift Card (3)`).
+   - Clicking any chip filters the document cards in real-time.
+
+5. **Visual Document Cards Grid**:
+   - Every chunk stored in ChromaDB is rendered as a clean card:
+     - **Entity Pill**: Color-coded badge (🟣 `FEATURE`, 🟢 `CARD`, 🟡 `TEST_DATA`).
+     - **Title & Metadata Badges**: Displaying Web ID, Card Number, Expiration Date, Amount, Platform.
+     - **Monospace Chunk Preview Box (`.kb-chunk-preview`)**: A scrollable preview displaying the **exact formatted text string** stored in ChromaDB, allowing full inspection of what the AI reads.
+     - **Interactive Media Chips**: Features with video demos or screenshots display clickable `▶ Video Demo` and `🖼 Screenshot` chips. Clicking opens the high-definition media modal with an HTML5 video player and zoomable screenshot viewer.
+     - **Quick Trash Icon**: Allows one-click deletion of any individual document.
+
+6. **Granular Multi-Select & Deletion Safety**:
+   - Document cards include individual checkboxes, plus a **Select All Visible** toggle.
+   - When items are checked, the sticky action bar displays the selection count and a glowing red **Delete Selected (X)** button.
+   - Clicking opens the **Confirm Vector Deletion Modal**, which lists the exact item titles to be deleted, preventing accidental mass data wipes.
+
+7. **Synchronization with Chat**:
+   - When the user asks the Chat Agent for cards or feature walkthroughs, the agent queries ChromaDB through the `fetch_qa_test_data` or `query_feature_knowledge` tools.
+   - The exact same interactive `▶ Video Demo` and `🖼 Screenshot` chips are dynamically rendered inside the chat message bubbles.
 
 ---
 
