@@ -159,12 +159,13 @@
                     <div class="header-actions">
                         <button id="btn-open-ingest" class="btn-header-secondary" title="Open RAG Knowledge & Ingest Dashboard">
                             <i class="fa-solid fa-database"></i>
-                            <span>RAG Dashboard</span>
+                            <span class="btn-text">RAG Dashboard</span>
+                            <span class="btn-text-mobile">RAG</span>
                             <span id="header-rag-badge" class="badge-mini-cyan">43</span>
                         </button>
                         <button id="btn-header-new-chat" class="btn-header-new" title="Start New Chat">
                             <i class="fa-solid fa-plus"></i>
-                            <span>New Chat</span>
+                            <span class="btn-text">New Chat</span>
                         </button>
                         <button id="btn-clear-chat" class="icon-button" title="Clear Current Chat">
                             <i class="fa-solid fa-trash-can"></i>
@@ -287,7 +288,7 @@
                     </div>
                     <div class="header-actions">
                         <button id="btn-back-to-chat" class="btn-header-new" title="Return to Chat Agent">
-                            <i class="fa-solid fa-arrow-left"></i> <span>Back to Chat</span>
+                            <i class="fa-solid fa-arrow-left"></i> <span class="btn-text">Back to Chat</span>
                         </button>
                     </div>
                 </header>
@@ -342,13 +343,19 @@
                             </div>
                             <div class="ingest-tabs">
                                 <button class="ingest-tab-btn active" data-tab="feature">
-                                    <i class="fa-solid fa-rocket"></i> <span>New Feature</span>
+                                    <i class="fa-solid fa-rocket"></i>
+                                    <span class="tab-label-full">New Feature</span>
+                                    <span class="tab-label-short">Feature</span>
                                 </button>
                                 <button class="ingest-tab-btn" data-tab="card">
-                                    <i class="fa-solid fa-credit-card"></i> <span>New Card</span>
+                                    <i class="fa-solid fa-credit-card"></i>
+                                    <span class="tab-label-full">New Card</span>
+                                    <span class="tab-label-short">Card</span>
                                 </button>
                                 <button class="ingest-tab-btn" data-tab="testdata">
-                                    <i class="fa-solid fa-box-archive"></i> <span>Test Data / Web ID</span>
+                                    <i class="fa-solid fa-box-archive"></i>
+                                    <span class="tab-label-full">Test Data / Web ID</span>
+                                    <span class="tab-label-short">Test Data</span>
                                 </button>
                             </div>
                         </div>
@@ -433,13 +440,15 @@
                                     <label for="card-number">Card Number <span class="required-star">*</span></label>
                                     <input type="text" id="card-number" placeholder="e.g. 6035340001257605" required>
                                 </div>
-                                <div class="input-group" style="max-width: 130px;">
-                                    <label for="card-cid">CVV / CID</label>
-                                    <input type="text" id="card-cid" placeholder="655">
-                                </div>
-                                <div class="input-group" style="max-width: 130px;">
-                                    <label for="card-exp">Exp Date</label>
-                                    <input type="text" id="card-exp" placeholder="07/29">
+                                <div class="form-subrow-compact">
+                                    <div class="input-group input-group-sm">
+                                        <label for="card-cid">CVV / CID</label>
+                                        <input type="text" id="card-cid" placeholder="655">
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <label for="card-exp">Exp Date</label>
+                                        <input type="text" id="card-exp" placeholder="07/29">
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-row">
