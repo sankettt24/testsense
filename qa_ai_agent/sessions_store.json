@@ -193,13 +193,13 @@
       }
     ]
   },
-  "3c52564b-089b-4354-a8cc-e25c3305fc28": {
-    "id": "3c52564b-089b-4354-a8cc-e25c3305fc28",
+  "test-session-chroma": {
+    "id": "test-session-chroma",
     "appName": "multi_tool_agent",
-    "userId": "qa_tester_1",
-    "title": "can you give me macys card",
-    "createdAt": 1792912815.1780689,
-    "updatedAt": 1792912874.7865112,
+    "userId": "qa_tester",
+    "title": "What is the card number and details...",
+    "createdAt": 1792918897.908899,
+    "updatedAt": 1792918924.383758,
     "state": {},
     "events": [
       {
@@ -207,12 +207,12 @@
           "role": "user",
           "parts": [
             {
-              "text": "can you give me macys card"
+              "text": "What is the card number and details for Prop Gold card?"
             }
           ]
         },
-        "author": "qa_tester_1",
-        "timestamp": 1792912861.2001011
+        "author": "qa_tester",
+        "timestamp": 1792918897.908899
       },
       {
         "model_version": "gemini-3.1-flash-lite",
@@ -224,9 +224,9 @@
               "executable_code": null,
               "file_data": null,
               "function_call": {
-                "id": "call_1708263",
+                "id": "call_1401913",
                 "args": {
-                  "category": "MACYS CARDS"
+                  "category": "Prop Gold card"
                 },
                 "name": "fetch_qa_test_data",
                 "partial_args": null,
@@ -236,7 +236,7 @@
               "inline_data": null,
               "text": null,
               "thought": null,
-              "thought_signature": "EnMKcQFpFH0TMr8TVGuqSbaRcpqxuq69rUMT_rcKv1GpVtsw4KT0vwY-9azfvLA3O0_EixBmwh5puciz9VrS4StvuV2Ic5OeF3lW5gJ53fLT1WKO5vLIWEEAdX0KlCln2f6EigdOXkxeuIzEJXgBwe90IY0E",
+              "thought_signature": "EnMKcQFpFH0TVoyPD4RWCLYv2X1HbPGv0PaaWj0aMKSkpDW--FNtaCA9-Vz8WCnCGb89HX8q3FPXR-oX-zhD9VsMnWgWKX9Fgeqpd8u9kaK5XLDS4_syjUsy7Ix1JxfMRxJNEVFH3mgvCGy-ppDQFkAPBsVp",
               "video_metadata": null,
               "tool_call": null,
               "tool_response": null,
@@ -258,19 +258,19 @@
         "usage_metadata": {
           "cache_tokens_details": null,
           "cached_content_token_count": null,
-          "candidates_token_count": 23,
+          "candidates_token_count": 22,
           "candidates_tokens_details": null,
-          "prompt_token_count": 2477,
+          "prompt_token_count": 2592,
           "prompt_tokens_details": [
             {
               "modality": "TEXT",
-              "token_count": 2477
+              "token_count": 2592
             }
           ],
           "thoughts_token_count": null,
           "tool_use_prompt_token_count": null,
           "tool_use_prompt_tokens_details": null,
-          "total_token_count": 2500,
+          "total_token_count": 2614,
           "traffic_type": null
         },
         "live_session_resumption_update": null,
@@ -285,7 +285,7 @@
         "citation_metadata": null,
         "interaction_id": null,
         "environment_id": null,
-        "invocation_id": "e-214034b9-9c18-4258-9577-3a58708d1406",
+        "invocation_id": "e-85e6fa2e-1632-462e-9e17-7ffd73963093",
         "author": "TestSense_AI",
         "actions": {
           "skip_summarization": null,
@@ -312,8 +312,8 @@
         "long_running_tool_ids": [],
         "branch": null,
         "isolation_scope": null,
-        "id": "496eb94b-c22a-4301-8876-8992f0af269f",
-        "timestamp": 1792912861.216723
+        "id": "d0d00470-a118-4240-a3a7-1261f50dccbb",
+        "timestamp": 1792918900.8448708
       },
       {
         "model_version": null,
@@ -329,18 +329,50 @@
                 "will_continue": null,
                 "scheduling": null,
                 "parts": null,
-                "id": "call_1708263",
+                "id": "call_1401913",
                 "name": "fetch_qa_test_data",
                 "response": {
                   "status": "success",
-                  "category": "MACYS CARDS",
+                  "retrieval_method": "RAG_Vector_Search",
+                  "query": "Prop Gold card",
+                  "count": 6,
                   "data": [
-                    "Prop Gold: 6035340000050209 | CVV: 655 | Exp: 07/29 | Address: 680 Folsom Street 100, Apt 121, SAN FRANCISCO, CA 94107",
-                    "Prop Platinum: 6035340399633250 | CVV: 749 | Exp: 07/29 | Address: 680 FOLSOM STREET 100, SAN FRANCISCO, CA 94107",
-                    "Macy's Amex: 377481599274799 | Exp: February/2027 | CVV: 1903",
-                    "Macy's Amex BT: 377481406011913 | Exp: 01/2028 | CVV: 6653",
-                    "Working BT Macy's card: 6035340001224902",
-                    "Macy's card 2: 6035340000050266 / 100"
+                    {
+                      "title": "Prop Gold (6035...0209)",
+                      "type": "card",
+                      "similarity_score": 1.0,
+                      "details": "[ENTITY: QA PAYMENT & TEST CARD]\nCard Type: Prop Gold\nCard Number: 6035340000050209\nCVV / CID: 655\nExpiration: 07/29\nBilling / Associated Address: 680 Folsom Street 100, Apt 121, SAN FRANCISCO, CA 94107\nNotes / Channel: Macy's Prop Gold Loyalty Card for in-store and online checkout\nKeywords: Prop Gold card number payment test card sandbox credit gift card loyalty 6035340000050209"
+                    },
+                    {
+                      "title": "Prop Platinum (6035...3250)",
+                      "type": "card",
+                      "similarity_score": 0.6401,
+                      "details": "[ENTITY: QA PAYMENT & TEST CARD]\nCard Type: Prop Platinum\nCard Number: 6035340399633250\nCVV / CID: 749\nExpiration: 07/29\nBilling / Associated Address: 680 FOLSOM STREET 100, SAN FRANCISCO, CA 94107\nNotes / Channel: Macy's Prop Platinum Loyalty Card\nKeywords: Prop Platinum card number payment test card sandbox credit gift card loyalty 6035340399633250"
+                    },
+                    {
+                      "title": "Working BT Macy's card (6035...4902)",
+                      "type": "card",
+                      "similarity_score": 0.6153,
+                      "details": "[ENTITY: QA PAYMENT & TEST CARD]\nCard Type: Working BT Macy's card\nCard Number: 6035340001224902\nCVV / CID: 100\nExpiration: 08/28\nBilling / Associated Address: 680 Folsom Street 100, SAN FRANCISCO, CA 94107\nNotes / Channel: Verified working BT Macy's proprietary card\nKeywords: Working BT Macy's card card number payment test card sandbox credit gift card loyalty 6035340001224902"
+                    },
+                    {
+                      "title": "Macy's Card 2 (6035...0266)",
+                      "type": "card",
+                      "similarity_score": 0.6019,
+                      "details": "[ENTITY: QA PAYMENT & TEST CARD]\nCard Type: Macy's Card 2\nCard Number: 6035340000050266\nCVV / CID: 100\nExpiration: 08/28\nBilling / Associated Address: 680 Folsom Street 100, SAN FRANCISCO, CA 94107\nNotes / Channel: Macy's secondary proprietary card with security code 100\nKeywords: Macy's Card 2 card number payment test card sandbox credit gift card loyalty 6035340000050266"
+                    },
+                    {
+                      "title": "Gift Card (6571...3982)",
+                      "type": "card",
+                      "similarity_score": 0.4969,
+                      "details": "[ENTITY: QA PAYMENT & TEST CARD]\nCard Type: Gift Card\nCard Number: 657192392603982\nCVV / CID: 5867\nCard Balance / Amount: $300.00\nNotes / Channel: Macy's $300 high-balance gift card\nKeywords: Gift Card card number payment test card sandbox credit gift card loyalty 657192392603982"
+                    },
+                    {
+                      "title": "VGC Web ID: 4391437",
+                      "type": "test_data",
+                      "similarity_score": 0.4967,
+                      "details": "[ENTITY: QA TEST DATA & WEB ID]\nCategory / Order Type: VGC\nProduct Web ID / SKU: 4391437\nProduct Name: Virtual Gift Card (VGC)\nDescription & Details: Virtual electronic gift card purchase SKU\nKeywords: VGC web id product id test data 4391437 Virtual Gift Card (VGC)"
+                    }
                   ]
                 }
               },
@@ -379,7 +411,7 @@
         "citation_metadata": null,
         "interaction_id": null,
         "environment_id": null,
-        "invocation_id": "e-214034b9-9c18-4258-9577-3a58708d1406",
+        "invocation_id": "e-85e6fa2e-1632-462e-9e17-7ffd73963093",
         "author": "TestSense_AI",
         "actions": {
           "skip_summarization": null,
@@ -406,8 +438,8 @@
         "long_running_tool_ids": null,
         "branch": null,
         "isolation_scope": null,
-        "id": "564f405d-f6ae-4a04-bac6-b4702e6d68bf",
-        "timestamp": 1792912869.207715
+        "id": "dd956c38-0f5a-48d7-8650-26c19650598d",
+        "timestamp": 1792918914.952605
       },
       {
         "model_version": "gemini-3.1-flash-lite",
@@ -421,9 +453,9 @@
               "function_call": null,
               "function_response": null,
               "inline_data": null,
-              "text": "Here are the available Macy's card test data:\n\n*   **Prop Gold:** 6035340000050209 | CVV: 655 | Exp: 07/29\n*   **Prop Platinum:** 6035340399633250 | CVV: 749 | Exp: 07/29\n*   **Macy's Amex:** 377481599274799 | CVV: 1903 | Exp: 02/2027\n*   **Macy's Amex BT:** 377481406011913 | CVV: 6653 | Exp: 01/2028\n*   **Working BT Macy's card:** 6035340001224902\n*   **Macy's card 2:** 6035340000050266 (Security Code: 100)",
+              "text": "I have retrieved the details for the Macy's Prop Gold card from the QA test data:\n\n*   **Card Type:** Prop Gold\n*   **Card Number:** 6035340000050209\n*   **CVV / CID:** 655\n*   **Expiration:** 07/29\n*   **Billing / Associated Address:** 680 Folsom Street 100, Apt 121, SAN FRANCISCO, CA 94107\n*   **Notes:** Macy's Prop Gold Loyalty Card for in-store and online checkout.",
               "thought": null,
-              "thought_signature": "EnMKcQFpFH0THIC90RetQ8xAS6tF7J2OHb0-N5FzAKjnvWBMN6GGgrAL0Vea8c-tNxPSFMtj5GGiX9M1S8qfrdqW_YBFklOoI1AEKPNpH1emA1jm7B267IUaa6p_teeR46pinhg38ec00gwxhG7rgWF-a-6e",
+              "thought_signature": "EnMKcQFpFH0TWxFGfP9ZzZ83fwBlu-ZLA4eFF7FQt3IVmk1duYTEIoH0GwUKLc1tht3AvmDzYZkmo6ybFj9gq9URMVknf2f30Isz_Vils78E1iy509VzYEbx5wbzx6Tev-k8s1XLMsXvWKOnltauvpIK0SSz",
               "video_metadata": null,
               "tool_call": null,
               "tool_response": null,
@@ -445,19 +477,19 @@
         "usage_metadata": {
           "cache_tokens_details": null,
           "cached_content_token_count": null,
-          "candidates_token_count": 254,
+          "candidates_token_count": 136,
           "candidates_tokens_details": null,
-          "prompt_token_count": 2818,
+          "prompt_token_count": 3644,
           "prompt_tokens_details": [
             {
               "modality": "TEXT",
-              "token_count": 2818
+              "token_count": 3644
             }
           ],
           "thoughts_token_count": null,
           "tool_use_prompt_token_count": null,
           "tool_use_prompt_tokens_details": null,
-          "total_token_count": 3072,
+          "total_token_count": 3780,
           "traffic_type": null
         },
         "live_session_resumption_update": null,
@@ -472,7 +504,7 @@
         "citation_metadata": null,
         "interaction_id": null,
         "environment_id": null,
-        "invocation_id": "e-214034b9-9c18-4258-9577-3a58708d1406",
+        "invocation_id": "e-85e6fa2e-1632-462e-9e17-7ffd73963093",
         "author": "TestSense_AI",
         "actions": {
           "skip_summarization": null,
@@ -499,18 +531,18 @@
         "long_running_tool_ids": null,
         "branch": null,
         "isolation_scope": null,
-        "id": "f184e288-c7bb-40da-90d0-f41abe4149af",
-        "timestamp": 1792912869.215679
+        "id": "bbda078a-a743-4de3-8ef5-6f4d441777ba",
+        "timestamp": 1792918914.9624472
       }
     ]
   },
-  "c4526626-4235-4dc5-a3dc-564e9c8c5d23": {
-    "id": "c4526626-4235-4dc5-a3dc-564e9c8c5d23",
+  "0d7ab7b7-dc37-4490-8cd2-1bfc80108a6b": {
+    "id": "0d7ab7b7-dc37-4490-8cd2-1bfc80108a6b",
     "appName": "multi_tool_agent",
     "userId": "qa_tester_1",
-    "title": "what did i ask in the last chat",
-    "createdAt": 1792914266.6469738,
-    "updatedAt": 1792914318.696662,
+    "title": "Star Money Loyalty Rewards Redempti...",
+    "createdAt": 1792920155.3625789,
+    "updatedAt": 1792920478.258705,
     "state": {},
     "events": [
       {
@@ -518,12 +550,12 @@
           "role": "user",
           "parts": [
             {
-              "text": "what did i ask in the last chat"
+              "text": "Star Money Loyalty Rewards Redemption"
             }
           ]
         },
         "author": "qa_tester_1",
-        "timestamp": 1792914283.793697
+        "timestamp": 1792920398.480418
       },
       {
         "model_version": "gemini-3.1-flash-lite",
@@ -534,12 +566,20 @@
               "code_execution_result": null,
               "executable_code": null,
               "file_data": null,
-              "function_call": null,
+              "function_call": {
+                "id": "call_1040958",
+                "args": {
+                  "feature_query": "Star Money Loyalty Rewards Redemption"
+                },
+                "name": "query_feature_knowledge",
+                "partial_args": null,
+                "will_continue": null
+              },
               "function_response": null,
               "inline_data": null,
-              "text": "I'm sorry, but I don't have access to your previous conversation history as each session starts fresh for your privacy and security. This is our first interaction in this chat. \n\nHow can I assist you with your QA tasks today? I can help with M/B-Money, mocking order fulfillments, fetching test data, or retrieving promotion details.",
+              "text": null,
               "thought": null,
-              "thought_signature": "EnMKcQFpFH0TtTOtjfBm0nSg--6KmU1VZIq0usietIRs8vSQpQ3CETojyYyZMqV55EUCiYZVkL46cPOmgynhcTwPmntaFe68sURn2BX-q8nDR89gPHF798XcD1mjPbZHxw9_YNTXqtejZDEhERjP1XoumHdk",
+              "thought_signature": "EnMKcQFpFH0TeHMX1lStH0gdZi-oNl6xdAezFmGmmLeYeUQ9IESdrdsqIKb9YXPRG_v-xB_VdiPrAUeeB-MmUJXNGA8U5Sf4t2KM-3PUvrbXJcny6qpZNTflPzmpt49oyyogySXUlDrdhQTPVqtycfMwb-SY",
               "video_metadata": null,
               "tool_call": null,
               "tool_response": null,
@@ -561,19 +601,19 @@
         "usage_metadata": {
           "cache_tokens_details": null,
           "cached_content_token_count": null,
-          "candidates_token_count": 74,
+          "candidates_token_count": 24,
           "candidates_tokens_details": null,
-          "prompt_token_count": 2478,
+          "prompt_token_count": 2585,
           "prompt_tokens_details": [
             {
               "modality": "TEXT",
-              "token_count": 2478
+              "token_count": 2585
             }
           ],
           "thoughts_token_count": null,
           "tool_use_prompt_token_count": null,
           "tool_use_prompt_tokens_details": null,
-          "total_token_count": 2552,
+          "total_token_count": 2609,
           "traffic_type": null
         },
         "live_session_resumption_update": null,
@@ -588,7 +628,126 @@
         "citation_metadata": null,
         "interaction_id": null,
         "environment_id": null,
-        "invocation_id": "e-42fbf459-ef21-49ba-a4da-9dcbbf208983",
+        "invocation_id": "e-09826dfa-383a-47ef-9bd8-63474287ca4a",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": [],
+        "branch": null,
+        "isolation_scope": null,
+        "id": "f4b73319-769d-44bf-90d4-6906d567e428",
+        "timestamp": 1792920398.502133
+      },
+      {
+        "model_version": null,
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": {
+                "will_continue": null,
+                "scheduling": null,
+                "parts": null,
+                "id": "call_1040958",
+                "name": "query_feature_knowledge",
+                "response": {
+                  "status": "success",
+                  "retrieval_method": "RAG_Feature_Search",
+                  "query": "Star Money Loyalty Rewards Redemption",
+                  "features": [
+                    {
+                      "feature_name": "Star Money Loyalty Rewards Redemption",
+                      "platform": "MCOM Site & App",
+                      "expected_behavior": "Eligible Macy's Cardholders earn reward dollars on purchases. During checkout, available Star Money balance appears automatically and can be applied in $10 increments.",
+                      "potential_issues": "If loyalty card number format is invalid or expired, rewards fail to load; partial refunds may cause temporary lock on reward dollars.",
+                      "things_to_observe": "Verify rewards balance reduces by chosen redemption amount; verify order total adjusts correctly with zero tax discrepancy.",
+                      "image_url": "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 1.0
+                    },
+                    {
+                      "feature_name": "M-Money / B-Money Customer Account Funding",
+                      "platform": "All Platforms (MCOM & BCOM)",
+                      "expected_behavior": "Automated provisioning of gift card funding into target customer account across environments (e.g. mcom-131, mcom-170, bcom-131). Up to 4 cards funded with $30 each in under 5 seconds.",
+                      "potential_issues": "Account must exist in the target environment database; corporate VPN required to access internal loyalty automation endpoint.",
+                      "things_to_observe": "Check Postman response wrapper for status='SUCCESS'; verify balance reflects in customer profile wallet immediately.",
+                      "image_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.5217
+                    },
+                    {
+                      "feature_name": "BOPS Same-Day Store Fulfillment Flow",
+                      "platform": "MCOM Site & App",
+                      "expected_behavior": "Customer chooses 'Pick Up In Store', selects store by zip (e.g. 22102), and completes checkout. Reservation ID is generated, and status moves from RESERVED -> SHPSHPD once store fulfills.",
+                      "potential_issues": "Inventory mismatch between warehouse and physical store can cause cancellation; reservationId wrapper response missing in order mods payload if order is STH.",
+                      "things_to_observe": "Check that reservation ID is non-empty; verify SHPSHPD status update event completes with 200 HTTP response code; inspect store hours in confirmation email.",
+                      "image_url": "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.3213
+                    }
+                  ]
+                }
+              },
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": null,
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "user"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": null,
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": null,
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-09826dfa-383a-47ef-9bd8-63474287ca4a",
         "author": "TestSense_AI",
         "actions": {
           "skip_summarization": null,
@@ -615,9 +774,542 @@
         "long_running_tool_ids": null,
         "branch": null,
         "isolation_scope": null,
-        "id": "0408d219-2ada-41be-9753-a682e0a11c2e",
-        "timestamp": 1792914283.816318
+        "id": "d43b25ff-324b-4f05-b747-f9fc517685ba",
+        "timestamp": 1792920404.142067
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "The Star Money Loyalty Rewards Redemption feature allows eligible Macy's Cardholders to earn and redeem reward dollars on their purchases.\n\n### **Feature Summary**\n*   **Expected Behavior:** Available Star Money balance appears automatically during the checkout process and can be applied in **$10 increments**.\n*   **Things to Observe:**\n    *   Verify that the rewards balance decreases by the redemption amount chosen.\n    *   Ensure the order total adjusts correctly and check for any potential tax discrepancies.\n*   **Potential Issues:**\n    *   Invalid or expired loyalty card formats can prevent rewards from loading.\n    *   Partial refunds may occasionally cause a temporary lock on reward dollars.\n\n**Would you like me to add Star Money to a specific loyalty card for your testing?** If so, please provide the **loyalty card number** and the **amount** (default is $10). *Please note: This functionality is for MCOM only.*",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0ThnSX0DFWXTbz3PqAtE6bf6gfJPwgXzs3H3755gHDuMJTZ4nyyknuej18XqjNMEEWzJ46LHoy-mgjxzuGduixc9-4GYI_KZdWtX0lO6BVmb9t2z4-ulM9siZ_a3WzEPpGrpJ5iGlhKfppVE2l",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 195,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 3357,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 3357
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 3552,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-09826dfa-383a-47ef-9bd8-63474287ca4a",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "a63cfb59-298f-44a8-95e9-465967390c05",
+        "timestamp": 1792920404.150815
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "show me video"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792920441.329634
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "I have retrieved the following walkthrough video for Star Money Loyalty Rewards Redemption:\n\n[Watch Star Money Redemption Walkthrough](https://www.w3schools.com/html/mov_bbb.mp4)\n\nIf you need any further assistance\u2014such as adding Star Money to a card for testing or looking up specific test data\u2014feel free to ask!",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0TtGkuVPo-Fukp9CB-PnM2SNaLWfpsbXsbvPvg8i4dnV6pVLrPu_FyAAZ1XxWEA41m6CZeQ95uZg_jT9w65I5BohGXb_lWSXdsNFj-F7WvfOQCfHWmEBupmGdQhdk4h-_EiMmrk1_b2v8Jcm47",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 72,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 3557,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 3557
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 3629,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-db65d1ce-7bd1-4eb7-8303-515a5ecea856",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "aa07924f-0569-46ec-a521-f12600e3a4ec",
+        "timestamp": 1792920441.344203
+      },
+      {
+        "content": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "ss of this feature"
+            }
+          ]
+        },
+        "author": "qa_tester_1",
+        "timestamp": 1792920470.160286
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": {
+                "id": "call_1150261",
+                "args": {
+                  "feature_query": "Star Money Loyalty Rewards Redemption"
+                },
+                "name": "query_feature_knowledge",
+                "partial_args": null,
+                "will_continue": null
+              },
+              "function_response": null,
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0TBlfFf0uxTqz31QrUnw7zLHcrePAE56YuHBpM6TUueoCoR9CtmpM4KdqCo0veSzX9Tsf-LK-GxFRaJEp_ZVkTeL68NfuEYdWXWN9ylIpU5fx7LcfjdVioC2Y1uSqQQ98mu6xL2VYBicWMXAFe",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 24,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 3635,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 3635
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 3659,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-6c684cd3-5e51-4f7d-81a9-d9e7a7efdb4b",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": [],
+        "branch": null,
+        "isolation_scope": null,
+        "id": "2e7792b2-3aff-4bf9-a450-a572a0b5b4df",
+        "timestamp": 1792920470.170986
+      },
+      {
+        "model_version": null,
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": {
+                "will_continue": null,
+                "scheduling": null,
+                "parts": null,
+                "id": "call_1150261",
+                "name": "query_feature_knowledge",
+                "response": {
+                  "status": "success",
+                  "retrieval_method": "RAG_Feature_Search",
+                  "query": "Star Money Loyalty Rewards Redemption",
+                  "features": [
+                    {
+                      "feature_name": "Star Money Loyalty Rewards Redemption",
+                      "platform": "MCOM Site & App",
+                      "expected_behavior": "Eligible Macy's Cardholders earn reward dollars on purchases. During checkout, available Star Money balance appears automatically and can be applied in $10 increments.",
+                      "potential_issues": "If loyalty card number format is invalid or expired, rewards fail to load; partial refunds may cause temporary lock on reward dollars.",
+                      "things_to_observe": "Verify rewards balance reduces by chosen redemption amount; verify order total adjusts correctly with zero tax discrepancy.",
+                      "image_url": "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 1.0
+                    },
+                    {
+                      "feature_name": "M-Money / B-Money Customer Account Funding",
+                      "platform": "All Platforms (MCOM & BCOM)",
+                      "expected_behavior": "Automated provisioning of gift card funding into target customer account across environments (e.g. mcom-131, mcom-170, bcom-131). Up to 4 cards funded with $30 each in under 5 seconds.",
+                      "potential_issues": "Account must exist in the target environment database; corporate VPN required to access internal loyalty automation endpoint.",
+                      "things_to_observe": "Check Postman response wrapper for status='SUCCESS'; verify balance reflects in customer profile wallet immediately.",
+                      "image_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.5217
+                    },
+                    {
+                      "feature_name": "BOPS Same-Day Store Fulfillment Flow",
+                      "platform": "MCOM Site & App",
+                      "expected_behavior": "Customer chooses 'Pick Up In Store', selects store by zip (e.g. 22102), and completes checkout. Reservation ID is generated, and status moves from RESERVED -> SHPSHPD once store fulfills.",
+                      "potential_issues": "Inventory mismatch between warehouse and physical store can cause cancellation; reservationId wrapper response missing in order mods payload if order is STH.",
+                      "things_to_observe": "Check that reservation ID is non-empty; verify SHPSHPD status update event completes with 200 HTTP response code; inspect store hours in confirmation email.",
+                      "image_url": "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800&auto=format&fit=crop&q=60",
+                      "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+                      "similarity_score": 0.3213
+                    }
+                  ]
+                }
+              },
+              "inline_data": null,
+              "text": null,
+              "thought": null,
+              "thought_signature": null,
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "user"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": null,
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": null,
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-6c684cd3-5e51-4f7d-81a9-d9e7a7efdb4b",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "b4f84b3c-7378-466d-b5ba-914173d885e0",
+        "timestamp": 1792920476.9038222
+      },
+      {
+        "model_version": "gemini-3.1-flash-lite",
+        "content": {
+          "parts": [
+            {
+              "media_resolution": null,
+              "code_execution_result": null,
+              "executable_code": null,
+              "file_data": null,
+              "function_call": null,
+              "function_response": null,
+              "inline_data": null,
+              "text": "Here is a representative image for the Star Money Loyalty Rewards Redemption feature:\n\n![Star Money Redemption](https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=60)\n\nIf you would like to test this, I am ready to help you set up the reward money on a loyalty card. Just provide the card number!",
+              "thought": null,
+              "thought_signature": "EnMKcQFpFH0T8VmLM7thz8LSJ4eGJo5ykEzlZUlSChaHhzAhPWpQ7kxWANKqNXuNtDb7eiu5PK4TYvjBrCC7uM9ZhDI7BtWPvic1lBVf0IU2GsVMRKWMq9t2McVI0kfXf_j6bJ-N_x8IZqKNLByZDTvzMH34",
+              "video_metadata": null,
+              "tool_call": null,
+              "tool_response": null,
+              "part_metadata": null,
+              "audio_transcription": null
+            }
+          ],
+          "role": "model"
+        },
+        "grounding_metadata": null,
+        "partial": null,
+        "turn_complete": null,
+        "turn_complete_reason": null,
+        "finish_reason": "STOP",
+        "error_code": null,
+        "error_message": null,
+        "interrupted": null,
+        "custom_metadata": null,
+        "usage_metadata": {
+          "cache_tokens_details": null,
+          "cached_content_token_count": null,
+          "candidates_token_count": 104,
+          "candidates_tokens_details": null,
+          "prompt_token_count": 4407,
+          "prompt_tokens_details": [
+            {
+              "modality": "TEXT",
+              "token_count": 4407
+            }
+          ],
+          "thoughts_token_count": null,
+          "tool_use_prompt_token_count": null,
+          "tool_use_prompt_tokens_details": null,
+          "total_token_count": 4511,
+          "traffic_type": null
+        },
+        "live_session_resumption_update": null,
+        "live_session_id": null,
+        "go_away": null,
+        "voice_activity": null,
+        "input_transcription": null,
+        "output_transcription": null,
+        "avg_logprobs": null,
+        "logprobs_result": null,
+        "cache_metadata": null,
+        "citation_metadata": null,
+        "interaction_id": null,
+        "environment_id": null,
+        "invocation_id": "e-6c684cd3-5e51-4f7d-81a9-d9e7a7efdb4b",
+        "author": "TestSense_AI",
+        "actions": {
+          "skip_summarization": null,
+          "state_delta": {},
+          "artifact_delta": {},
+          "transfer_to_agent": null,
+          "escalate": null,
+          "requested_auth_configs": {},
+          "requested_tool_confirmations": {},
+          "compaction": null,
+          "end_of_agent": null,
+          "agent_state": null,
+          "rewind_before_invocation_id": null,
+          "route": null,
+          "render_ui_widgets": null,
+          "set_model_response": null
+        },
+        "output": null,
+        "node_info": {
+          "path": "TestSense_AI@1",
+          "output_for": null,
+          "message_as_output": null
+        },
+        "long_running_tool_ids": null,
+        "branch": null,
+        "isolation_scope": null,
+        "id": "37ae1463-12da-481f-b28b-7d39b4f24208",
+        "timestamp": 1792920476.9120462
       }
     ]
+  },
+  "64647b2e-7fd8-44e6-8b6a-04e9a6080941": {
+    "id": "64647b2e-7fd8-44e6-8b6a-04e9a6080941",
+    "appName": "multi_tool_agent",
+    "userId": "qa_tester_1",
+    "title": "New Chat",
+    "createdAt": 1792920491.689614,
+    "updatedAt": 1792920491.689614,
+    "state": {},
+    "events": []
   }
 }
